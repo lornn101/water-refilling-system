@@ -19,10 +19,21 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
-    ];
+    'name',
+    'email',
+    'password',
+    'role',
+    'contact_no',
+];
+public function customerProfile()
+{
+    return $this->hasOne(CustomerProfile::class);
+}
+
+public function riderProfile()
+{
+    return $this->hasOne(RiderProfile::class);
+}
 
     /**
      * The attributes that should be hidden for serialization.
