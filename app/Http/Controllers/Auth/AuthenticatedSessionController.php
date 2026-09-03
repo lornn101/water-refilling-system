@@ -22,14 +22,35 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
-    {
-        $request->authenticate();
+    public function store(LoginRequest $request)
+{
+    $request->authenticate();
 
-        $request->session()->regenerate();
+    $user = Auth::user();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+    // ✅ ONLY check status if the user is a CUSTOMER
+    if ($user->role === 'customer') {
+        if ($user->status === 'pending') {
+            Auth::logout();
+            return back()->withErrors([
+                'email' => 'Your account is pending approval. Please wait for the cashier to approve your account.',
+            ]);
+        }
+
+        if ($user->status === 'rejected') {
+            Auth::logout();
+            return back()->withErrors([
+                'email' => 'Your account has been rejected. Please contact support for more information.',
+            ]);
+        }
     }
+
+    // ✅ Cashiers and Riders are automatically approved – no status check needed
+
+    $request->session()->regenerate();
+
+    return redirect()->intended(route('dashboard', absolute: false));
+}
 
     /**
      * Destroy an authenticated session.

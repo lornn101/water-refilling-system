@@ -31,45 +31,32 @@ class RegisteredUserController extends Controller
      * @throws ValidationException
      */
     public function store(Request $request)
-{
-    // Custom conditional rules to avoid "required_if" issues with hidden fields
-    $rules = [
-        'name' => ['required', 'string', 'max:255'],
-        'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-        'contact_no' => ['required', 'string', 'max:20'],
-        'role' => ['required', 'in:customer,rider,cashier'],
-        'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        'barangay' => ['nullable', 'string', 'max:255'],
-        'delivery_notes' => ['nullable', 'string'],
-        'plate_number' => ['nullable', 'string', 'max:50'],
-    ];
+    {
+        // ✅ Only customers can register through this form
+        // The 'role' field is a hidden input set to 'customer'
+        
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'contact_no' => ['required', 'string', 'max:20'],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            // Customer-specific fields (always required for registration)
+            'street_address' => ['required', 'string', 'max:255'],
+            'barangay' => ['nullable', 'string', 'max:255'],
+            'delivery_notes' => ['nullable', 'string'],
+        ]);
 
-    // Add conditional rules based on role
-    if ($request->role === 'customer') {
-        $rules['street_address'] = ['required', 'string', 'max:255'];
-    } else {
-        $rules['street_address'] = ['nullable', 'string', 'max:255']; // Accept null/empty
-    }
+        // ✅ Create the user with role = 'customer' and status = 'pending'
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'contact_no' => $request->contact_no,
+            'role' => 'customer', // ✅ Always customer
+            'password' => Hash::make($request->password),
+            'status' => 'pending', // ✅ Requires cashier approval
+        ]);
 
-    if ($request->role === 'rider') {
-        $rules['vehicle_type'] = ['required', 'string', 'max:255'];
-    } else {
-        $rules['vehicle_type'] = ['nullable', 'string', 'max:255'];
-    }
-
-    $request->validate($rules);
-
-    // Create the user
-    $user = User::create([
-        'name' => $request->name,
-        'email' => $request->email,
-        'contact_no' => $request->contact_no,
-        'role' => $request->role,
-        'password' => Hash::make($request->password),
-    ]);
-
-    // Create profile based on role
-    if ($request->role === 'customer') {
+        // ✅ Always create a customer profile (since only customers register)
         CustomerProfile::create([
             'user_id' => $user->id,
             'street_address' => $request->street_address,
@@ -77,19 +64,12 @@ class RegisteredUserController extends Controller
             'delivery_notes' => $request->delivery_notes,
             'preferred_delivery_time' => null,
         ]);
-    } elseif ($request->role === 'rider') {
-        RiderProfile::create([
-            'user_id' => $user->id,
-            'vehicle_type' => $request->vehicle_type,
-            'plate_number' => $request->plate_number,
-            'valid_id_path' => null,
-            'availability_status' => 'available',
-            'current_lat_long' => null,
-        ]);
-    }
 
-    event(new Registered($user));
-    Auth::login($user);
-    return redirect(route('dashboard', absolute: false));
+        // ❌ DO NOT auto-login the user
+        // event(new Registered($user)); // Commented out
+        // Auth::login($user);           // Commented out
+
+        // ✅ Redirect to login with pending approval message
+        return redirect()->route('login')->with('status', 'Your account has been registered and is pending approval. Please wait for the cashier to approve your account.');
     }
 }

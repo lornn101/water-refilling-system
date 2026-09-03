@@ -7,11 +7,12 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -24,7 +25,25 @@ class User extends Authenticatable
     'password',
     'role',
     'contact_no',
+    'status',
+    'deleted_at',
 ];
+
+public function isApproved()
+{
+    return $this->status === 'approved';
+}
+
+public function isPending()
+{
+    return $this->status === 'pending';
+}
+
+public function isRejected()
+{
+    return $this->status === 'rejected';
+}
+
 public function customerProfile()
 {
     return $this->hasOne(CustomerProfile::class);
