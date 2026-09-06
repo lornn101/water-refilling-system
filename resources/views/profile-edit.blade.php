@@ -14,14 +14,14 @@
                     {{ ucfirst(Auth::user()->role) }}
                 </span>
                 @if(!$canEdit)
-    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-        🔒 Read-Only
-    </span>
-@else
-    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-        👑 Owner Access
-    </span>
-@endif
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                        🔒 Read-Only
+                    </span>
+                @else
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        👑 Owner Access
+                    </span>
+                @endif
             </div>
         </div>
     </x-slot>
@@ -83,24 +83,24 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <x-input-label for="name" :value="__('Full Name')" />
-                        <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name', $user->name)" {{ !$canEdit ? 'readonly disabled' : '' }} required />
+                        <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name', $user->name ?? '')" {{ !$canEdit ? 'readonly disabled' : '' }} required />
                         <x-input-error :messages="$errors->get('name')" class="mt-2" />
                     </div>
 
                     <div>
                         <x-input-label for="email" :value="__('Email Address')" />
-                        <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $user->email)" {{ !$canEdit ? 'readonly disabled' : '' }} required />
+                        <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $user->email ?? '')" {{ !$canEdit ? 'readonly disabled' : '' }} required />
                         <x-input-error :messages="$errors->get('email')" class="mt-2" />
                     </div>
 
                     <div>
                         <x-input-label for="contact_no" :value="__('Contact Number')" />
-                        <x-text-input id="contact_no" class="block mt-1 w-full" type="text" name="contact_no" :value="old('contact_no', $user->contact_no)" {{ !$canEdit ? 'readonly disabled' : '' }} required />
+                        <x-text-input id="contact_no" class="block mt-1 w-full" type="text" name="contact_no" :value="old('contact_no', $user->contact_no ?? '')" {{ !$canEdit ? 'readonly disabled' : '' }} required />
                         <x-input-error :messages="$errors->get('contact_no')" class="mt-2" />
                     </div>
                 </div>
 
-                {{-- 🟢 CUSTOMER FIELDS --}}
+                {{-- 🟢 CUSTOMER FIELDS (only if user is customer) --}}
                 @if($user->role === 'customer')
                     <div class="mt-6 p-4 bg-blue-50/50 rounded-xl border border-blue-100">
                         <p class="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-3">📍 Delivery Details</p>
@@ -126,7 +126,7 @@
                     </div>
                 @endif
 
-                {{-- 🟢 RIDER FIELDS --}}
+                {{-- 🟢 RIDER FIELDS (only if user is rider) --}}
                 @if($user->role === 'rider')
                     <div class="mt-6 p-4 bg-cyan-50/50 rounded-xl border border-cyan-100">
                         <p class="text-xs font-semibold text-cyan-700 uppercase tracking-wider mb-3">🛵 Vehicle Details</p>

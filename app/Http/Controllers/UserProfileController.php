@@ -25,30 +25,40 @@ class UserProfileController extends Controller
      * Show the profile page (read-only unless user is the owner).
      */
     public function edit()
-    {
-        $user = Auth::user();
-
-        // ✅ Load the role-specific profile
-        if ($user->role === 'customer') {
-            $user->load('customerProfile');
-        } elseif ($user->role === 'rider') {
-            $user->load('riderProfile');
-        }
-
-        // ✅ Only the Owner can edit
-        $canEdit = $this->isOwner();
-
-        // ✅ Debug: Uncomment below to see user data
-        // dd($user);
-
-        return view('profile-edit', compact('user', 'canEdit'));
+{
+    // ✅ Check if user is authenticated
+    if (!Auth::check()) {
+        return redirect()->route('login');
     }
+
+    $user = Auth::user();
+
+    // ✅ Load the role-specific profile
+    if ($user->role === 'customer') {
+        $user->load('customerProfile');
+    } elseif ($user->role === 'rider') {
+        $user->load('riderProfile');
+    }
+
+    // ✅ Only the Owner can edit
+    $canEdit = $this->isOwner();
+
+    // ✅ Debug: Uncomment to check data
+    // dd($user);
+
+    return view('profile-edit', compact('user', 'canEdit'));
+}
 
     /**
      * Update a user's profile (Owner only).
      */
     public function update(Request $request)
     {
+        // ✅ Check if user is authenticated
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
         $user = Auth::user();
 
         // ✅ ONLY OWNER CAN EDIT

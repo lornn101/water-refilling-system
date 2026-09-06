@@ -54,6 +54,17 @@ public function riderProfile()
     return $this->hasOne(RiderProfile::class);
 }
 
+// Orders placed by this customer
+public function orders()
+{
+    return $this->hasMany(Order::class, 'customer_id');
+}
+
+// Orders assigned to this rider
+public function assignedOrders()
+{
+    return $this->hasMany(Order::class, 'rider_id');
+}
     /**
      * The attributes that should be hidden for serialization.
      *

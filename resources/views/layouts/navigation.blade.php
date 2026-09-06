@@ -24,6 +24,30 @@
                         {{ __('My Profile') }}
                     </x-nav-link>
 
+                    {{-- 🟢 Customer Order Links --}}
+                    @if(Auth::user()->role === 'customer')
+                        <x-nav-link :href="route('customer.orders')" :active="request()->routeIs('customer.orders')">
+                            {{ __('My Orders') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('customer.place-order')" :active="request()->routeIs('customer.place-order')">
+                            {{ __('Place Order') }}
+                        </x-nav-link>
+                    @endif
+
+                    {{-- 🟢 Rider Order Links --}}
+                    @if(Auth::user()->role === 'rider')
+                        <x-nav-link :href="route('rider.orders')" :active="request()->routeIs('rider.orders')">
+                            {{ __('My Deliveries') }}
+                        </x-nav-link>
+                    @endif
+
+                    {{-- 🟢 Order Management Links (Owner & Cashier) --}}
+                    @if(Auth::user()->role === 'owner' || Auth::user()->role === 'cashier')
+                        <x-nav-link :href="route('owner.orders')" :active="request()->routeIs('owner.orders')">
+                            {{ __('Manage Orders') }}
+                        </x-nav-link>
+                    @endif
+
                     {{-- Owner-Only Links (Desktop) --}}
                     @if(Auth::user()->role === 'owner')
                         <x-nav-link :href="route('cashier.users')" :active="request()->routeIs('cashier.users')">
@@ -92,6 +116,30 @@
             <x-responsive-nav-link :href="route('my-profile')" :active="request()->routeIs('my-profile')">
                 {{ __('My Profile') }}
             </x-responsive-nav-link>
+
+            {{-- 🟢 Customer Order Links (Mobile) --}}
+            @if(Auth::user()->role === 'customer')
+                <x-responsive-nav-link :href="route('customer.orders')" :active="request()->routeIs('customer.orders')">
+                    {{ __('My Orders') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('customer.place-order')" :active="request()->routeIs('customer.place-order')">
+                    {{ __('Place Order') }}
+                </x-responsive-nav-link>
+            @endif
+
+            {{-- 🟢 Rider Order Links (Mobile) --}}
+            @if(Auth::user()->role === 'rider')
+                <x-responsive-nav-link :href="route('rider.orders')" :active="request()->routeIs('rider.orders')">
+                    {{ __('My Deliveries') }}
+                </x-responsive-nav-link>
+            @endif
+
+            {{-- 🟢 Order Management Links (Owner & Cashier) --}}
+            @if(Auth::user()->role === 'owner' || Auth::user()->role === 'cashier')
+                <x-responsive-nav-link :href="route('owner.orders')" :active="request()->routeIs('owner.orders')">
+                    {{ __('Manage Orders') }}
+                </x-responsive-nav-link>
+            @endif
 
             {{-- Owner-Only Links (Mobile) --}}
             @if(Auth::user()->role === 'owner')
