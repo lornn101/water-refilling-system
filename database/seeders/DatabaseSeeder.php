@@ -2,24 +2,39 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
-class DatabaseSeeder extends Seeder
+class OwnerAccountSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // ✅ Create Owner Account
+        User::firstOrCreate(
+            ['email' => 'owner@owner.com'],
+            [
+                'name' => 'System Owner',
+                'contact_no' => '09123456789',
+                'role' => 'owner',      // ✅ Now 'owner' role
+                'status' => 'approved',
+                'password' => Hash::make('owner123'),
+            ]
+        );
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // ✅ Create Cashier Account
+        User::firstOrCreate(
+            ['email' => 'cashier@cashier.com'],
+            [
+                'name' => 'Cashier User',
+                'contact_no' => '09123456780',
+                'role' => 'cashier',    // ✅ 'cashier' role
+                'status' => 'approved',
+                'password' => Hash::make('cashier123'),
+            ]
+        );
+
+        $this->command->info('✅ Owner account created: owner@owner.com / password: owner123');
+        $this->command->info('✅ Cashier account created: cashier@cashier.com / password: cashier123');
     }
 }

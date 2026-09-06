@@ -6,6 +6,7 @@
             </h2>
             {{-- Role Badge --}}
             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                {{ Auth::user()->role === 'owner' ? 'bg-red-100 text-red-800' : '' }}
                 {{ Auth::user()->role === 'cashier' ? 'bg-purple-100 text-purple-800' : '' }}
                 {{ Auth::user()->role === 'rider' ? 'bg-cyan-100 text-cyan-800' : '' }}
                 {{ Auth::user()->role === 'customer' ? 'bg-blue-100 text-blue-800' : '' }}">
@@ -22,6 +23,7 @@
             <div class="bg-white overflow-hidden shadow-xl rounded-2xl border border-blue-100/50 p-6 mb-6">
                 <div class="flex items-center space-x-4">
                     <div class="w-14 h-14 rounded-full flex items-center justify-center text-2xl font-bold text-white
+                        {{ Auth::user()->role === 'owner' ? 'bg-red-600' : '' }}
                         {{ Auth::user()->role === 'cashier' ? 'bg-purple-600' : '' }}
                         {{ Auth::user()->role === 'rider' ? 'bg-cyan-600' : '' }}
                         {{ Auth::user()->role === 'customer' ? 'bg-blue-600' : '' }}">
@@ -149,22 +151,22 @@
                 @endif
 
                 {{-- ============================ --}}
-                {{-- 🟢 CASHIER / OWNER DASHBOARD --}}
+                {{-- 🟢 OWNER DASHBOARD --}}
                 {{-- ============================ --}}
-                @if(Auth::user()->role === 'cashier')
-                    <div class="bg-white overflow-hidden shadow-lg rounded-2xl border border-purple-100 p-6 col-span-3">
+                @if(Auth::user()->role === 'owner')
+                    <div class="bg-white overflow-hidden shadow-lg rounded-2xl border border-red-100 p-6 col-span-3">
                         <div class="flex items-center mb-4">
-                            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-3">
-                                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                                 </svg>
                             </div>
-                            <h3 class="text-lg font-semibold text-gray-800">📊 Management Overview</h3>
+                            <h3 class="text-lg font-semibold text-gray-800">👑 Owner Dashboard</h3>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div class="bg-blue-50 p-4 rounded-xl text-center border border-blue-100">
-                                <p class="text-2xl font-bold text-blue-600">0</p>
+                            <div class="bg-red-50 p-4 rounded-xl text-center border border-red-100">
+                                <p class="text-2xl font-bold text-red-600">0</p>
                                 <p class="text-sm text-gray-600">Total Orders</p>
                             </div>
                             <div class="bg-yellow-50 p-4 rounded-xl text-center border border-yellow-100">
@@ -182,7 +184,7 @@
                         </div>
 
                         <div class="mt-6 flex flex-wrap gap-3">
-                            <a href="{{ route('cashier.users') }}" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition shadow-md">
+                            <a href="{{ route('cashier.users') }}" class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow-md">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
                                 </svg>
@@ -203,6 +205,46 @@
                         </div>
                     </div>
                 @endif
+
+                {{-- ============================ --}}
+                {{-- 🟢 CASHIER DASHBOARD (Read-Only) --}}
+                {{-- ============================ --}}
+                @if(Auth::user()->role === 'cashier')
+                    <div class="bg-white overflow-hidden shadow-lg rounded-2xl border border-purple-100 p-6 col-span-3">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-3">
+                                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-800">📊 Dashboard Overview</h3>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="bg-purple-50 p-4 rounded-xl text-center border border-purple-100">
+                                <p class="text-2xl font-bold text-purple-600">0</p>
+                                <p class="text-sm text-gray-600">Total Orders</p>
+                            </div>
+                            <div class="bg-yellow-50 p-4 rounded-xl text-center border border-yellow-100">
+                                <p class="text-2xl font-bold text-yellow-600">0</p>
+                                <p class="text-sm text-gray-600">Pending</p>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-xl text-center border border-green-100">
+                                <p class="text-2xl font-bold text-green-600">0</p>
+                                <p class="text-sm text-gray-600">Delivered</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-xl text-center border border-gray-100">
+                                <p class="text-2xl font-bold text-gray-600">{{ \App\Models\User::count() }}</p>
+                                <p class="text-sm text-gray-600">Total Users</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200 text-center">
+                            <p class="text-sm text-gray-500">🔒 View-only access. Management features are restricted to the System Owner.</p>
+                        </div>
+                    </div>
+                @endif
+
             </div>
         </div>
     </div>

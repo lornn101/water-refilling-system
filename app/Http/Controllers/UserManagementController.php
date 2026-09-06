@@ -15,9 +15,9 @@ class UserManagementController extends Controller
      */
     public function index(Request $request)
     {
-        // Only cashier/owner can access this
-        if (Auth::user()->role !== 'cashier') {
-            abort(403, 'Unauthorized access.');
+        // ✅ Only OWNER can access this
+        if (Auth::user()->role !== 'owner') {
+            abort(403, 'Only the system owner can manage users.');
         }
 
         // Build the query
@@ -82,6 +82,11 @@ class UserManagementController extends Controller
      */
     public function approve($id)
     {
+        // ✅ Only OWNER can approve
+        if (Auth::user()->role !== 'owner') {
+            abort(403, 'Only the system owner can approve users.');
+        }
+
         $user = User::findOrFail($id);
         $user->status = 'approved';
         $user->save();
@@ -94,6 +99,11 @@ class UserManagementController extends Controller
      */
     public function reject($id)
     {
+        // ✅ Only OWNER can reject
+        if (Auth::user()->role !== 'owner') {
+            abort(403, 'Only the system owner can reject users.');
+        }
+
         $user = User::findOrFail($id);
         $user->status = 'rejected';
         $user->save();
@@ -106,8 +116,9 @@ class UserManagementController extends Controller
      */
     public function edit($id)
     {
-        if (Auth::user()->role !== 'cashier') {
-            abort(403);
+        // ✅ Only OWNER can edit
+        if (Auth::user()->role !== 'owner') {
+            abort(403, 'Only the system owner can edit users.');
         }
 
         $user = User::withTrashed()->findOrFail($id);
@@ -119,8 +130,9 @@ class UserManagementController extends Controller
      */
     public function update(Request $request, $id)
     {
-        if (Auth::user()->role !== 'cashier') {
-            abort(403);
+        // ✅ Only OWNER can update
+        if (Auth::user()->role !== 'owner') {
+            abort(403, 'Only the system owner can update users.');
         }
 
         $user = User::withTrashed()->findOrFail($id);
@@ -129,7 +141,7 @@ class UserManagementController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $id],
             'contact_no' => ['required', 'string', 'max:20'],
-            'role' => ['required', 'in:customer,rider,cashier'],
+            'role' => ['required', 'in:customer,rider,cashier,owner'], // ✅ Added 'owner'
         ];
 
         // Only validate password if it's being changed
@@ -158,6 +170,11 @@ class UserManagementController extends Controller
      */
     public function destroy($id)
     {
+        // ✅ Only OWNER can delete
+        if (Auth::user()->role !== 'owner') {
+            abort(403, 'Only the system owner can delete users.');
+        }
+
         $user = User::findOrFail($id);
         $user->delete();
 
@@ -169,6 +186,11 @@ class UserManagementController extends Controller
      */
     public function restore($id)
     {
+        // ✅ Only OWNER can restore
+        if (Auth::user()->role !== 'owner') {
+            abort(403, 'Only the system owner can restore users.');
+        }
+
         $user = User::onlyTrashed()->findOrFail($id);
         $user->restore();
 
@@ -180,6 +202,11 @@ class UserManagementController extends Controller
      */
     public function forceDelete($id)
     {
+        // ✅ Only OWNER can force delete
+        if (Auth::user()->role !== 'owner') {
+            abort(403, 'Only the system owner can permanently delete users.');
+        }
+
         $user = User::onlyTrashed()->findOrFail($id);
         $userName = $user->name;
         $user->forceDelete();
@@ -192,8 +219,9 @@ class UserManagementController extends Controller
      */
     public function createRider()
     {
-        if (Auth::user()->role !== 'cashier') {
-            abort(403);
+        // ✅ Only OWNER can create riders
+        if (Auth::user()->role !== 'owner') {
+            abort(403, 'Only the system owner can create rider accounts.');
         }
         return view('cashier.create-rider');
     }
@@ -203,8 +231,9 @@ class UserManagementController extends Controller
      */
     public function storeRider(Request $request)
     {
-        if (Auth::user()->role !== 'cashier') {
-            abort(403);
+        // ✅ Only OWNER can store riders
+        if (Auth::user()->role !== 'owner') {
+            abort(403, 'Only the system owner can create rider accounts.');
         }
 
         $request->validate([

@@ -37,8 +37,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/cashier/store-rider', [UserManagementController::class, 'storeRider'])->name('cashier.store-rider');
 });
 
-Route::get('/my-profile', function () {
-    return view('profile');
-})->middleware(['auth'])->name('my-profile');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/my-profile', [App\Http\Controllers\UserProfileController::class, 'edit'])->name('my-profile');
+    Route::put('/my-profile', [App\Http\Controllers\UserProfileController::class, 'update'])->name('my-profile.update');
+});
 
 require __DIR__.'/auth.php';
