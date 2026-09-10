@@ -83,19 +83,31 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <x-input-label for="name" :value="__('Full Name')" />
-                        <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name', $user->name ?? '')" {{ !$canEdit ? 'readonly disabled' : '' }} required />
+                        @if($canEdit)
+                            <input id="name" name="name" type="text" value="{{ old('name', $user->name) }}" class="block mt-1 w-full border-gray-300 focus:border-blue-400 focus:ring-blue-400 rounded-lg shadow-sm" required />
+                        @else
+                            <input id="name" type="text" value="{{ $user->name }}" class="block mt-1 w-full border-gray-300 bg-gray-100 text-gray-700 rounded-lg shadow-sm" readonly disabled />
+                        @endif
                         <x-input-error :messages="$errors->get('name')" class="mt-2" />
                     </div>
 
                     <div>
                         <x-input-label for="email" :value="__('Email Address')" />
-                        <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $user->email ?? '')" {{ !$canEdit ? 'readonly disabled' : '' }} required />
+                        @if($canEdit)
+                            <input id="email" name="email" type="email" value="{{ old('email', $user->email) }}" class="block mt-1 w-full border-gray-300 focus:border-blue-400 focus:ring-blue-400 rounded-lg shadow-sm" required />
+                        @else
+                            <input id="email" type="email" value="{{ $user->email }}" class="block mt-1 w-full border-gray-300 bg-gray-100 text-gray-700 rounded-lg shadow-sm" readonly disabled />
+                        @endif
                         <x-input-error :messages="$errors->get('email')" class="mt-2" />
                     </div>
 
                     <div>
                         <x-input-label for="contact_no" :value="__('Contact Number')" />
-                        <x-text-input id="contact_no" class="block mt-1 w-full" type="text" name="contact_no" :value="old('contact_no', $user->contact_no ?? '')" {{ !$canEdit ? 'readonly disabled' : '' }} required />
+                        @if($canEdit)
+                            <input id="contact_no" name="contact_no" type="text" value="{{ old('contact_no', $user->contact_no) }}" class="block mt-1 w-full border-gray-300 focus:border-blue-400 focus:ring-blue-400 rounded-lg shadow-sm" required />
+                        @else
+                            <input id="contact_no" type="text" value="{{ $user->contact_no }}" class="block mt-1 w-full border-gray-300 bg-gray-100 text-gray-700 rounded-lg shadow-sm" readonly disabled />
+                        @endif
                         <x-input-error :messages="$errors->get('contact_no')" class="mt-2" />
                     </div>
                 </div>
@@ -107,19 +119,31 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <x-input-label for="street_address" :value="__('Street Address')" />
-                                <x-text-input id="street_address" class="block mt-1 w-full" type="text" name="street_address" :value="old('street_address', $user->customerProfile->street_address ?? '')" {{ !$canEdit ? 'readonly disabled' : '' }} required />
+                                @if($canEdit)
+                                    <input id="street_address" name="street_address" type="text" value="{{ old('street_address', $user->customerProfile->street_address ?? '') }}" class="block mt-1 w-full border-gray-300 focus:border-blue-400 focus:ring-blue-400 rounded-lg shadow-sm" required />
+                                @else
+                                    <input id="street_address" type="text" value="{{ $user->customerProfile->street_address ?? 'N/A' }}" class="block mt-1 w-full border-gray-300 bg-gray-100 text-gray-700 rounded-lg shadow-sm" readonly disabled />
+                                @endif
                                 <x-input-error :messages="$errors->get('street_address')" class="mt-2" />
                             </div>
 
                             <div>
                                 <x-input-label for="barangay" :value="__('Barangay')" />
-                                <x-text-input id="barangay" class="block mt-1 w-full" type="text" name="barangay" :value="old('barangay', $user->customerProfile->barangay ?? 'Poblacion')" {{ !$canEdit ? 'readonly disabled' : '' }} />
+                                @if($canEdit)
+                                    <input id="barangay" name="barangay" type="text" value="{{ old('barangay', $user->customerProfile->barangay ?? 'Poblacion') }}" class="block mt-1 w-full border-gray-300 focus:border-blue-400 focus:ring-blue-400 rounded-lg shadow-sm" />
+                                @else
+                                    <input id="barangay" type="text" value="{{ $user->customerProfile->barangay ?? 'N/A' }}" class="block mt-1 w-full border-gray-300 bg-gray-100 text-gray-700 rounded-lg shadow-sm" readonly disabled />
+                                @endif
                                 <x-input-error :messages="$errors->get('barangay')" class="mt-2" />
                             </div>
 
                             <div class="md:col-span-2">
                                 <x-input-label for="delivery_notes" :value="__('Delivery Notes (Landmarks)')" />
-                                <textarea id="delivery_notes" name="delivery_notes" class="block mt-1 w-full border-gray-300 focus:border-blue-400 focus:ring-blue-400 rounded-lg shadow-sm" {{ !$canEdit ? 'readonly disabled' : '' }}>{{ old('delivery_notes', $user->customerProfile->delivery_notes ?? '') }}</textarea>
+                                @if($canEdit)
+                                    <textarea id="delivery_notes" name="delivery_notes" class="block mt-1 w-full border-gray-300 focus:border-blue-400 focus:ring-blue-400 rounded-lg shadow-sm">{{ old('delivery_notes', $user->customerProfile->delivery_notes ?? '') }}</textarea>
+                                @else
+                                    <textarea id="delivery_notes" class="block mt-1 w-full border-gray-300 bg-gray-100 text-gray-700 rounded-lg shadow-sm" readonly disabled>{{ $user->customerProfile->delivery_notes ?? 'None' }}</textarea>
+                                @endif
                                 <x-input-error :messages="$errors->get('delivery_notes')" class="mt-2" />
                             </div>
                         </div>
@@ -133,27 +157,39 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <x-input-label for="vehicle_type" :value="__('Vehicle Type')" />
-                                <select id="vehicle_type" name="vehicle_type" class="block mt-1 w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-400 focus:ring-blue-400" {{ !$canEdit ? 'disabled' : '' }} required>
-                                    <option value="Motorcycle" {{ old('vehicle_type', $user->riderProfile->vehicle_type ?? '') == 'Motorcycle' ? 'selected' : '' }}>Motorcycle</option>
-                                    <option value="Tricycle" {{ old('vehicle_type', $user->riderProfile->vehicle_type ?? '') == 'Tricycle' ? 'selected' : '' }}>Tricycle</option>
-                                    <option value="E-Bike" {{ old('vehicle_type', $user->riderProfile->vehicle_type ?? '') == 'E-Bike' ? 'selected' : '' }}>E-Bike</option>
-                                </select>
+                                @if($canEdit)
+                                    <select id="vehicle_type" name="vehicle_type" class="block mt-1 w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-400 focus:ring-blue-400" required>
+                                        <option value="Motorcycle" {{ old('vehicle_type', $user->riderProfile->vehicle_type ?? '') == 'Motorcycle' ? 'selected' : '' }}>Motorcycle</option>
+                                        <option value="Tricycle" {{ old('vehicle_type', $user->riderProfile->vehicle_type ?? '') == 'Tricycle' ? 'selected' : '' }}>Tricycle</option>
+                                        <option value="E-Bike" {{ old('vehicle_type', $user->riderProfile->vehicle_type ?? '') == 'E-Bike' ? 'selected' : '' }}>E-Bike</option>
+                                    </select>
+                                @else
+                                    <input id="vehicle_type" type="text" value="{{ $user->riderProfile->vehicle_type ?? 'N/A' }}" class="block mt-1 w-full border-gray-300 bg-gray-100 text-gray-700 rounded-lg shadow-sm" readonly disabled />
+                                @endif
                                 <x-input-error :messages="$errors->get('vehicle_type')" class="mt-2" />
                             </div>
 
                             <div>
                                 <x-input-label for="plate_number" :value="__('Plate Number (Optional)')" />
-                                <x-text-input id="plate_number" class="block mt-1 w-full" type="text" name="plate_number" :value="old('plate_number', $user->riderProfile->plate_number ?? '')" {{ !$canEdit ? 'readonly disabled' : '' }} />
+                                @if($canEdit)
+                                    <input id="plate_number" name="plate_number" type="text" value="{{ old('plate_number', $user->riderProfile->plate_number ?? '') }}" class="block mt-1 w-full border-gray-300 focus:border-blue-400 focus:ring-blue-400 rounded-lg shadow-sm" />
+                                @else
+                                    <input id="plate_number" type="text" value="{{ $user->riderProfile->plate_number ?? 'N/A' }}" class="block mt-1 w-full border-gray-300 bg-gray-100 text-gray-700 rounded-lg shadow-sm" readonly disabled />
+                                @endif
                                 <x-input-error :messages="$errors->get('plate_number')" class="mt-2" />
                             </div>
 
                             <div>
                                 <x-input-label for="availability_status" :value="__('Availability Status')" />
-                                <select id="availability_status" name="availability_status" class="block mt-1 w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-400 focus:ring-blue-400" {{ !$canEdit ? 'disabled' : '' }} required>
-                                    <option value="available" {{ old('availability_status', $user->riderProfile->availability_status ?? '') == 'available' ? 'selected' : '' }}>Available</option>
-                                    <option value="on_delivery" {{ old('availability_status', $user->riderProfile->availability_status ?? '') == 'on_delivery' ? 'selected' : '' }}>On Delivery</option>
-                                    <option value="offline" {{ old('availability_status', $user->riderProfile->availability_status ?? '') == 'offline' ? 'selected' : '' }}>Offline</option>
-                                </select>
+                                @if($canEdit)
+                                    <select id="availability_status" name="availability_status" class="block mt-1 w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-400 focus:ring-blue-400" required>
+                                        <option value="available" {{ old('availability_status', $user->riderProfile->availability_status ?? '') == 'available' ? 'selected' : '' }}>Available</option>
+                                        <option value="on_delivery" {{ old('availability_status', $user->riderProfile->availability_status ?? '') == 'on_delivery' ? 'selected' : '' }}>On Delivery</option>
+                                        <option value="offline" {{ old('availability_status', $user->riderProfile->availability_status ?? '') == 'offline' ? 'selected' : '' }}>Offline</option>
+                                    </select>
+                                @else
+                                    <input id="availability_status" type="text" value="{{ ucfirst($user->riderProfile->availability_status ?? 'N/A') }}" class="block mt-1 w-full border-gray-300 bg-gray-100 text-gray-700 rounded-lg shadow-sm" readonly disabled />
+                                @endif
                                 <x-input-error :messages="$errors->get('availability_status')" class="mt-2" />
                             </div>
                         </div>
@@ -167,14 +203,14 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <x-input-label for="password" :value="__('New Password')" />
-                                <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" />
+                                <input id="password" name="password" type="password" class="block mt-1 w-full border-gray-300 focus:border-blue-400 focus:ring-blue-400 rounded-lg shadow-sm" />
                                 <p class="text-xs text-gray-400 mt-1">Leave blank to keep current password</p>
                                 <x-input-error :messages="$errors->get('password')" class="mt-2" />
                             </div>
 
                             <div>
                                 <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
-                                <x-text-input id="password_confirmation" class="block mt-1 w-full" type="password" name="password_confirmation" />
+                                <input id="password_confirmation" name="password_confirmation" type="password" class="block mt-1 w-full border-gray-300 focus:border-blue-400 focus:ring-blue-400 rounded-lg shadow-sm" />
                                 <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
                             </div>
                         </div>
