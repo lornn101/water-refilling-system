@@ -12,6 +12,9 @@ class Order extends Model
     protected $fillable = [
         'customer_id',
         'rider_id',
+        'is_walk_in',
+        'walk_in_customer_name',
+        'walk_in_contact',
         'quantity',
         'delivery_address',
         'delivery_notes',
@@ -23,50 +26,99 @@ class Order extends Model
     ];
 
     protected $casts = [
+        'is_walk_in' => 'boolean',
         'delivery_date' => 'datetime',
         'assigned_at' => 'datetime',
         'delivered_at' => 'datetime',
     ];
 
-    // Relationship: Customer who placed the order
+    // ============================================================
+    // RELATIONSHIPS
+    // ============================================================
     public function customer()
     {
         return $this->belongsTo(User::class, 'customer_id');
     }
 
-    // Relationship: Rider assigned to the order
     public function rider()
     {
         return $this->belongsTo(User::class, 'rider_id');
     }
 
-    // Helper methods for status
-    public function isPending()
+    // ============================================================
+    // STATUS HELPERS
+    // ============================================================
+    public function isPending()    { return $this->status === 'pending'; }
+    public function isAssigned()   { return $this->status === 'assigned'; }
+    public function isOnDelivery() { return $this->status === 'on_delivery'; }
+    public function isDelivered()  { return $this->status === 'delivered'; }
+    public function isCancelled()  { return $this->status === 'cancelled'; }
+    public function isCompleted()  { return $this->status === 'completed'; } // ✅ NEW
+
+    // ============================================================
+    // BUSINESS LOGIC
+    // ============================================================
+
+    /**
+     * Can a customer modify this order?
+     * Only pending, non-walk-in orders can be modified by the customer.
+     */
+    public function canBeModified()
     {
-        return $this->status === 'pending';
+        return !$this->is_walk_in && $this->status === 'pending';
     }
 
-    public function isAssigned()
+    /**
+     * Was this order modified after creation?
+     */
+    public function wasModified()
     {
-        return $this->status === 'assigned';
+        return $this->updated_at && $this->updated_at->gt($this->created_at->addSecond());
     }
 
-    public function isOnDelivery()
+    /**
+     * Is this order a walk-in refill (immediately completed at station)?
+     */
+    public function isWalkInRefill()
     {
-        return $this->status === 'on_delivery';
+        return $this->is_walk_in && $this->status === 'completed';
     }
 
-    public function isDelivered()
+    // ============================================================
+    // DISPLAY HELPERS
+    // ============================================================
+    public function getCustomerName()
     {
-        return $this->status === 'delivered';
+        if ($this->is_walk_in) {
+            return $this->walk_in_customer_name ?? 'Walk-in Customer';
+        }
+        return $this->customer->name ?? 'N/A';
     }
 
-    public function isCancelled()
+    public function getCustomerContact()
     {
-        return $this->status === 'cancelled';
+        if ($this->is_walk_in) {
+            return $this->walk_in_contact ?? $this->contact_number ?? 'N/A';
+        }
+        return $this->customer->contact_no ?? $this->contact_number;
     }
 
-    // Get status badge color
+    /**
+     * Human-readable status label
+     */
+    public function getStatusLabel()
+    {
+        return match ($this->status) {
+            'pending' => 'Pending',
+            'assigned' => 'Assigned',
+            'on_delivery' => 'On Delivery',
+            'delivered' => 'Delivered',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled',
+            default => 'Unknown',
+        };
+    }
+
     public function getStatusBadgeColor()
     {
         return match ($this->status) {
@@ -74,12 +126,12 @@ class Order extends Model
             'assigned' => 'bg-blue-100 text-blue-800',
             'on_delivery' => 'bg-purple-100 text-purple-800',
             'delivered' => 'bg-green-100 text-green-800',
+            'completed' => 'bg-emerald-100 text-emerald-800',
             'cancelled' => 'bg-red-100 text-red-800',
             default => 'bg-gray-100 text-gray-800',
         };
     }
 
-    // Get status icon
     public function getStatusIcon()
     {
         return match ($this->status) {
@@ -87,6 +139,7 @@ class Order extends Model
             'assigned' => '📋',
             'on_delivery' => '🚚',
             'delivered' => '✅',
+            'completed' => '🏪',
             'cancelled' => '❌',
             default => '📦',
         };

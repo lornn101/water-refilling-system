@@ -167,20 +167,12 @@
                 </div>
                 <div class="flex justify-center lg:justify-end">
                     <div class="relative">
-                        <div class="w-64 h-64 md:w-80 md:h-80 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center water-drop">
-                            <svg class="w-32 h-32 md:w-40 md:h-40 text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
-                            </svg>
-                        </div>
-                        <div class="absolute -bottom-4 -right-4 bg-white rounded-xl shadow-xl px-4 py-2 text-sm">
-                            <span class="font-bold text-blue-600">100+</span>
-                            <span class="text-gray-500"> Happy Customers</span>
-                        </div>
-                        <div class="absolute -top-4 -left-4 bg-white rounded-xl shadow-xl px-4 py-2 text-sm">
-                            <span class="font-bold text-blue-600">⭐ 4.9</span>
-                            <span class="text-gray-500"> / 5.0</span>
-                        </div>
-                    </div>
+    <div class="w-64 h-64 md:w-80 md:h-80 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center water-drop">
+        <svg class="w-32 h-32 md:w-40 md:h-40 text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+        </svg>
+    </div>
+</div>
                 </div>
             </div>
         </div>

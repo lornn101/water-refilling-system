@@ -174,24 +174,32 @@
                             <h3 class="text-lg font-semibold text-gray-800">👑 Owner Dashboard</h3>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div class="bg-red-50 p-4 rounded-xl text-center border border-red-100">
-                                <p class="text-2xl font-bold text-red-600">{{ \App\Models\Order::count() }}</p>
-                                <p class="text-sm text-gray-600">Total Orders</p>
-                            </div>
-                            <div class="bg-yellow-50 p-4 rounded-xl text-center border border-yellow-100">
-                                <p class="text-2xl font-bold text-yellow-600">{{ \App\Models\Order::where('status', 'pending')->count() }}</p>
-                                <p class="text-sm text-gray-600">Pending</p>
-                            </div>
-                            <div class="bg-green-50 p-4 rounded-xl text-center border border-green-100">
-                                <p class="text-2xl font-bold text-green-600">{{ \App\Models\Order::where('status', 'delivered')->count() }}</p>
-                                <p class="text-sm text-gray-600">Delivered</p>
-                            </div>
-                            <div class="bg-purple-50 p-4 rounded-xl text-center border border-purple-100">
-                                <p class="text-2xl font-bold text-purple-600">{{ \App\Models\User::count() }}</p>
-                                <p class="text-sm text-gray-600">Total Users</p>
-                            </div>
-                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <div class="bg-red-50 p-4 rounded-xl text-center border border-red-100">
+        <p class="text-2xl font-bold text-red-600">{{ \App\Models\Order::count() }}</p>
+        <p class="text-sm text-gray-600">Total</p>
+    </div>
+    <div class="bg-yellow-50 p-4 rounded-xl text-center border border-yellow-100">
+        <p class="text-2xl font-bold text-yellow-600">{{ \App\Models\Order::where('status', 'pending')->count() }}</p>
+        <p class="text-sm text-gray-600">Pending</p>
+    </div>
+    <div class="bg-blue-50 p-4 rounded-xl text-center border border-blue-100">
+        <p class="text-2xl font-bold text-blue-600">{{ \App\Models\Order::whereIn('status', ['assigned', 'on_delivery'])->count() }}</p>
+        <p class="text-sm text-gray-600">In Progress</p>
+    </div>
+    <div class="bg-green-50 p-4 rounded-xl text-center border border-green-100">
+        <p class="text-2xl font-bold text-green-600">{{ \App\Models\Order::where('status', 'delivered')->count() }}</p>
+        <p class="text-sm text-gray-600">Delivered</p>
+    </div>
+    <div class="bg-emerald-50 p-4 rounded-xl text-center border border-emerald-100">
+        <p class="text-2xl font-bold text-emerald-600">{{ \App\Models\Order::where('status', 'completed')->count() }}</p>
+        <p class="text-sm text-gray-600">Completed</p>
+    </div>
+    <div class="bg-purple-50 p-4 rounded-xl text-center border border-purple-100">
+        <p class="text-2xl font-bold text-purple-600">{{ \App\Models\User::count() }}</p>
+        <p class="text-sm text-gray-600">Users</p>
+    </div>
+</div>
 
                         <div class="mt-6 flex flex-wrap gap-3">
                             <a href="{{ route('cashier.users') }}" class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow-md">
@@ -230,24 +238,28 @@
             <h3 class="text-lg font-semibold text-gray-800">📊 Cashier Dashboard</h3>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="bg-purple-50 p-4 rounded-xl text-center border border-purple-100">
-                <p class="text-2xl font-bold text-purple-600">{{ \App\Models\Order::count() }}</p>
-                <p class="text-sm text-gray-600">Total Orders</p>
-            </div>
-            <div class="bg-yellow-50 p-4 rounded-xl text-center border border-yellow-100">
-                <p class="text-2xl font-bold text-yellow-600">{{ \App\Models\Order::where('status', 'pending')->count() }}</p>
-                <p class="text-sm text-gray-600">Pending</p>
-            </div>
-            <div class="bg-green-50 p-4 rounded-xl text-center border border-green-100">
-                <p class="text-2xl font-bold text-green-600">{{ \App\Models\Order::where('status', 'delivered')->count() }}</p>
-                <p class="text-sm text-gray-600">Delivered</p>
-            </div>
-            <div class="bg-gray-50 p-4 rounded-xl text-center border border-gray-100">
-                <p class="text-2xl font-bold text-gray-600">{{ \App\Models\User::count() }}</p>
-                <p class="text-sm text-gray-600">Total Users</p>
-            </div>
-        </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+    <div class="bg-purple-50 p-4 rounded-xl text-center border border-purple-100">
+        <p class="text-2xl font-bold text-purple-600">{{ \App\Models\Order::count() }}</p>
+        <p class="text-sm text-gray-600">Total</p>
+    </div>
+    <div class="bg-yellow-50 p-4 rounded-xl text-center border border-yellow-100">
+        <p class="text-2xl font-bold text-yellow-600">{{ \App\Models\Order::where('status', 'pending')->count() }}</p>
+        <p class="text-sm text-gray-600">Pending</p>
+    </div>
+    <div class="bg-blue-50 p-4 rounded-xl text-center border border-blue-100">
+        <p class="text-2xl font-bold text-blue-600">{{ \App\Models\Order::whereIn('status', ['assigned', 'on_delivery'])->count() }}</p>
+        <p class="text-sm text-gray-600">In Progress</p>
+    </div>
+    <div class="bg-green-50 p-4 rounded-xl text-center border border-green-100">
+        <p class="text-2xl font-bold text-green-600">{{ \App\Models\Order::where('status', 'delivered')->count() }}</p>
+        <p class="text-sm text-gray-600">Delivered</p>
+    </div>
+    <div class="bg-emerald-50 p-4 rounded-xl text-center border border-emerald-100">
+        <p class="text-2xl font-bold text-emerald-600">{{ \App\Models\Order::where('status', 'completed')->count() }}</p>
+        <p class="text-sm text-gray-600">Completed</p>
+    </div>
+</div>
 
         <div class="mt-6 flex flex-wrap gap-3">
             <a href="{{ route('owner.orders') }}" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition shadow-md">

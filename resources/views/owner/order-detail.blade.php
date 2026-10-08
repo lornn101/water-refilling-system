@@ -28,8 +28,8 @@
                         <div>
                             <p class="text-xs text-gray-500">Status</p>
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $order->getStatusBadgeColor() }}">
-                                {{ $order->getStatusIcon() }} {{ ucfirst($order->status) }}
-                            </span>
+    {{ $order->getStatusIcon() }} {{ $order->getStatusLabel() }}
+</span>
                         </div>
                         <div>
                             <p class="text-xs text-gray-500">Quantity</p>
@@ -104,12 +104,13 @@
                     <form method="POST" action="{{ route('owner.update-status', $order->id) }}" class="flex items-center gap-3">
                         @csrf
                         <select name="status" class="border-gray-300 rounded-lg focus:border-blue-400 focus:ring-blue-400 text-sm">
-                            <option value="pending" {{ $order->status === 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="assigned" {{ $order->status === 'assigned' ? 'selected' : '' }}>Assigned</option>
-                            <option value="on_delivery" {{ $order->status === 'on_delivery' ? 'selected' : '' }}>On Delivery</option>
-                            <option value="delivered" {{ $order->status === 'delivered' ? 'selected' : '' }}>Delivered</option>
-                            <option value="cancelled" {{ $order->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
-                        </select>
+    <option value="pending" {{ $order->status === 'pending' ? 'selected' : '' }}>⏳ Pending</option>
+    <option value="assigned" {{ $order->status === 'assigned' ? 'selected' : '' }}>📋 Assigned</option>
+    <option value="on_delivery" {{ $order->status === 'on_delivery' ? 'selected' : '' }}>🚚 On Delivery</option>
+    <option value="delivered" {{ $order->status === 'delivered' ? 'selected' : '' }}>✅ Delivered</option>
+    <option value="completed" {{ $order->status === 'completed' ? 'selected' : '' }}>🏪 Completed (Walk-in Refill)</option>
+    <option value="cancelled" {{ $order->status === 'cancelled' ? 'selected' : '' }}>❌ Cancelled</option>
+</select>
                         <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm font-medium">
                             Update Status
                         </button>

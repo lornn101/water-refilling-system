@@ -10,44 +10,17 @@ use Illuminate\Support\Facades\Validator;
 
 class OrderController extends Controller
 {
-    /**
-     * Helper method to check if user is owner.
-     */
-    private function isOwner()
-    {
-        return Auth::check() && Auth::user()->role === 'owner';
-    }
+    // ============================================================
+    // HELPERS
+    // ============================================================
+    private function isOwner()    { return Auth::check() && Auth::user()->role === 'owner'; }
+    private function isCashier()  { return Auth::check() && Auth::user()->role === 'cashier'; }
+    private function isRider()    { return Auth::check() && Auth::user()->role === 'rider'; }
+    private function isCustomer() { return Auth::check() && Auth::user()->role === 'customer'; }
 
-    /**
-     * Helper method to check if user is cashier.
-     */
-    private function isCashier()
-    {
-        return Auth::check() && Auth::user()->role === 'cashier';
-    }
-
-    /**
-     * Helper method to check if user is rider.
-     */
-    private function isRider()
-    {
-        return Auth::check() && Auth::user()->role === 'rider';
-    }
-
-    /**
-     * Helper method to check if user is customer.
-     */
-    private function isCustomer()
-    {
-        return Auth::check() && Auth::user()->role === 'customer';
-    }
-
-    /**
-     * Helper method to check if user has order management access (owner or cashier).
-     */
     private function canManageOrders()
     {
-        return Auth::check() && (Auth::user()->role === 'owner' || Auth::user()->role === 'cashier');
+        return Auth::check() && in_array(Auth::user()->role, ['owner', 'cashier']);
     }
 
     // ============================================================
@@ -55,58 +28,52 @@ class OrderController extends Controller
     // ============================================================
     public function create()
     {
-        if (!$this->isCustomer()) {
-            abort(403, 'Only customers can place orders.');
-        }
-
+        if (!$this->isCustomer()) abort(403, 'Only customers can place orders.');
         $user = Auth::user();
         return view('customer.place-order', compact('user'));
     }
 
     public function store(Request $request)
-    {
-        if (!$this->isCustomer()) {
-            abort(403, 'Only customers can place orders.');
-        }
+{
+    if (!$this->isCustomer()) abort(403, 'Only customers can place orders.');
 
-        $user = Auth::user();
+    $user = Auth::user();
 
-        $validator = Validator::make($request->all(), [
-            'quantity' => ['required', 'integer', 'min:1', 'max:20'],
-            'delivery_address' => ['required', 'string', 'max:500'],
-            'delivery_notes' => ['nullable', 'string', 'max:500'],
-            'contact_number' => ['required', 'string', 'max:20'],
-            'delivery_date' => ['nullable', 'date', 'after_or_equal:today'],
-        ]);
+    $validator = Validator::make($request->all(), [
+        'quantity' => ['required', 'integer', 'min:1', 'max:20'],
+        'delivery_address' => ['required', 'string', 'max:500'],
+        'delivery_notes' => ['nullable', 'string', 'max:500'],
+        'contact_number' => ['required', 'string', 'max:20'],
+        'delivery_date' => ['nullable', 'date', 'after_or_equal:today'],
+    ]);
 
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        $order = Order::create([
-            'customer_id' => $user->id,
-            'quantity' => $request->quantity,
-            'delivery_address' => $request->delivery_address,
-            'delivery_notes' => $request->delivery_notes,
-            'contact_number' => $request->contact_number,
-            'status' => 'pending',
-            'delivery_date' => $request->delivery_date ?? now()->addDay(),
-        ]);
-
-        return redirect()->route('customer.orders')->with('success', '✅ Order placed successfully! Your order is pending approval.');
+    if ($validator->fails()) {
+        return redirect()->back()->withErrors($validator)->withInput();
     }
 
+    $order = Order::create([
+        'customer_id' => $user->id,
+        'is_walk_in' => false,        // ✅ Explicitly false
+        'quantity' => $request->quantity,
+        'delivery_address' => $request->delivery_address,
+        'delivery_notes' => $request->delivery_notes,
+        'contact_number' => $request->contact_number,
+        'status' => 'pending',
+        'delivery_date' => $request->delivery_date ?? now()->addDay(),
+    ]);
+
+    return redirect()->route('customer.orders')
+        ->with('success', '✅ Order #' . $order->id . ' placed successfully! Waiting for approval.');
+}
+
     // ============================================================
-    // 🟢 CUSTOMER: View Orders History
+    // 🟢 CUSTOMER: Order History
     // ============================================================
     public function customerOrders()
     {
-        if (!$this->isCustomer()) {
-            abort(403, 'Unauthorized access.');
-        }
+        if (!$this->isCustomer()) abort(403, 'Unauthorized access.');
 
-        $user = Auth::user();
-        $orders = Order::where('customer_id', $user->id)
+        $orders = Order::where('customer_id', Auth::id())
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
@@ -114,65 +81,138 @@ class OrderController extends Controller
     }
 
     // ============================================================
-    // 🟢 OWNER / CASHIER: View All Orders
+    // 🟢 CUSTOMER: Edit Pending Order
+    // ============================================================
+    public function customerEdit($id)
+{
+    if (!$this->isCustomer()) abort(403, 'Unauthorized access.');
+
+    $order = Order::where('customer_id', Auth::id())
+        ->where('status', 'pending')
+        ->findOrFail($id);
+
+    return view('customer.edit-order', compact('order'));
+}
+
+    public function customerUpdate(Request $request, $id)
+{
+    if (!$this->isCustomer()) abort(403, 'Unauthorized access.');
+
+    $order = Order::where('customer_id', Auth::id())
+        ->where('status', 'pending')
+        ->findOrFail($id);
+
+    $validator = Validator::make($request->all(), [
+        'quantity' => ['required', 'integer', 'min:1', 'max:20'],
+        'delivery_address' => ['required', 'string', 'max:500'],
+        'delivery_notes' => ['nullable', 'string', 'max:500'],
+        'contact_number' => ['required', 'string', 'max:20'],
+        'delivery_date' => ['nullable', 'date', 'after_or_equal:today'],
+    ]);
+
+    if ($validator->fails()) {
+        return redirect()->back()->withErrors($validator)->withInput();
+    }
+
+    $order->update([
+        'quantity' => $request->quantity,
+        'delivery_address' => $request->delivery_address,
+        'delivery_notes' => $request->delivery_notes,
+        'contact_number' => $request->contact_number,
+        'delivery_date' => $request->delivery_date,
+    ]);
+
+    return redirect()->route('customer.orders')
+        ->with('success', '✏️ Order #' . $order->id . ' updated successfully!');
+}
+
+    // ============================================================
+    // 🟢 CUSTOMER: Cancel Pending Order
+    // ============================================================
+    public function customerCancel($id)
+{
+    if (!$this->isCustomer()) abort(403, 'Unauthorized access.');
+
+    $order = Order::where('customer_id', Auth::id())
+        ->where('status', 'pending')
+        ->findOrFail($id);
+
+    $order->status = 'cancelled';
+    $order->save();
+
+    return redirect()->route('customer.orders')
+        ->with('success', '❌ Order #' . $order->id . ' cancelled successfully.');
+}
+
+    // ============================================================
+    // 🟢 OWNER / CASHIER: List All Orders
     // ============================================================
     public function ownerOrders(Request $request)
     {
-        if (!$this->canManageOrders()) {
-            abort(403, 'Only the system owner and cashiers can view orders.');
-        }
+        if (!$this->canManageOrders()) abort(403);
 
         $query = Order::with(['customer', 'rider']);
 
-        // Filter by status
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        // Search by customer name or order ID
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('id', 'like', "%{$search}%")
+                  ->orWhere('walk_in_customer_name', 'like', "%{$search}%")
                   ->orWhereHas('customer', function ($q2) use ($search) {
                       $q2->where('name', 'like', "%{$search}%");
                   });
             });
         }
 
-        $orders = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
+        if ($request->filled('type')) {
+            if ($request->type === 'walk_in') {
+                $query->where('is_walk_in', true);
+            } elseif ($request->type === 'online') {
+                $query->where('is_walk_in', false);
+            }
+        }
 
-        // Get all riders for assignment dropdown
+        $orders = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
         $riders = User::where('role', 'rider')->where('status', 'approved')->get();
 
-        // Get counts for stats
-        $pendingCount = Order::where('status', 'pending')->count();
-        $assignedCount = Order::where('status', 'assigned')->count();
-        $onDeliveryCount = Order::where('status', 'on_delivery')->count();
-        $deliveredCount = Order::where('status', 'delivered')->count();
-        $cancelledCount = Order::where('status', 'cancelled')->count();
+        // Stats
         $totalOrders = Order::count();
+        $pendingCount = Order::where('status', 'pending')->count();
+        $inProgressCount = Order::whereIn('status', ['assigned', 'on_delivery'])->count();
+        $deliveredCount = Order::where('status', 'delivered')->count();
+        $completedCount = Order::where('status', 'completed')->count();
+        $cancelledCount = Order::where('status', 'cancelled')->count();
 
         return view('owner.orders', compact(
-            'orders',
-            'riders',
-            'pendingCount',
-            'assignedCount',
-            'onDeliveryCount',
-            'deliveredCount',
-            'cancelledCount',
-            'totalOrders'
+            'orders', 'riders', 'totalOrders',
+            'pendingCount', 'inProgressCount', 'deliveredCount',
+            'completedCount', 'cancelledCount'
         ));
     }
 
     // ============================================================
-    // 🟢 OWNER / CASHIER: Assign Rider to Order
+    // 🟢 OWNER / CASHIER: View Order Detail
+    // ============================================================
+    public function show($id)
+    {
+        if (!$this->canManageOrders()) abort(403);
+
+        $order = Order::with(['customer', 'rider'])->findOrFail($id);
+        $riders = User::where('role', 'rider')->where('status', 'approved')->get();
+
+        return view('owner.order-detail', compact('order', 'riders'));
+    }
+
+    // ============================================================
+    // 🟢 OWNER / CASHIER: Assign Rider
     // ============================================================
     public function assignRider(Request $request, $id)
     {
-        if (!$this->canManageOrders()) {
-            abort(403, 'Only the system owner and cashiers can assign riders.');
-        }
+        if (!$this->canManageOrders()) abort(403);
 
         $request->validate([
             'rider_id' => ['required', 'exists:users,id,role,rider'],
@@ -180,7 +220,7 @@ class OrderController extends Controller
 
         $order = Order::findOrFail($id);
 
-        if ($order->status !== 'pending' && $order->status !== 'assigned') {
+        if (!in_array($order->status, ['pending', 'assigned'])) {
             return redirect()->back()->with('error', '❌ This order cannot be assigned at this stage.');
         }
 
@@ -191,20 +231,18 @@ class OrderController extends Controller
 
         $riderName = User::find($request->rider_id)->name;
 
-        return redirect()->back()->with('success', "✅ Order #{$order->id} assigned to rider '{$riderName}' successfully!");
+        return redirect()->back()->with('success', "✅ Order #{$order->id} assigned to '{$riderName}'.");
     }
 
     // ============================================================
-    // 🟢 OWNER / CASHIER: Update Order Status
+    // 🟢 OWNER / CASHIER: Update Status
     // ============================================================
     public function updateStatus(Request $request, $id)
     {
-        if (!$this->canManageOrders()) {
-            abort(403, 'Only the system owner and cashiers can update order status.');
-        }
+        if (!$this->canManageOrders()) abort(403);
 
         $request->validate([
-            'status' => ['required', 'in:pending,assigned,on_delivery,delivered,cancelled'],
+            'status' => ['required', 'in:pending,assigned,on_delivery,delivered,cancelled,completed'],
         ]);
 
         $order = Order::findOrFail($id);
@@ -217,22 +255,59 @@ class OrderController extends Controller
 
         $order->save();
 
-        return redirect()->back()->with('success', "✅ Order #{$order->id} status updated from '{$oldStatus}' to '{$request->status}'.");
+        return redirect()->back()
+            ->with('success', "✅ Order #{$order->id} status updated from '{$oldStatus}' to '{$request->status}'.");
     }
 
     // ============================================================
-    // 🟢 OWNER / CASHIER: View Single Order Details
+    // 🟢 OWNER / CASHIER: Walk-in Order Form
     // ============================================================
-    public function show($id)
+    public function walkInCreate()
     {
-        if (!$this->canManageOrders()) {
-            abort(403, 'Unauthorized access.');
+        if (!$this->canManageOrders()) abort(403);
+        return view('owner.walk-in-order');
+    }
+
+    // ============================================================
+    // 🟢 OWNER / CASHIER: Store Walk-in Order
+    // ============================================================
+    public function walkInStore(Request $request)
+    {
+        if (!$this->canManageOrders()) abort(403);
+
+        $validator = Validator::make($request->all(), [
+            'walk_in_customer_name' => ['required', 'string', 'max:255'],
+            'walk_in_contact' => ['nullable', 'string', 'max:20'],
+            'quantity' => ['required', 'integer', 'min:1', 'max:50'],
+            'order_type' => ['required', 'in:refill,delivery'],
+            'delivery_address' => ['required_if:order_type,delivery', 'nullable', 'string', 'max:500'],
+            'delivery_notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $order = Order::with(['customer', 'rider'])->findOrFail($id);
-        $riders = User::where('role', 'rider')->where('status', 'approved')->get();
+        $isRefill = $request->order_type === 'refill';
 
-        return view('owner.order-detail', compact('order', 'riders'));
+        $order = Order::create([
+            'customer_id' => null,
+            'is_walk_in' => true,
+            'walk_in_customer_name' => $request->walk_in_customer_name,
+            'walk_in_contact' => $request->walk_in_contact,
+            'quantity' => $request->quantity,
+            'delivery_address' => $isRefill ? 'Walk-in Refill at Station' : $request->delivery_address,
+            'delivery_notes' => $request->delivery_notes,
+            'contact_number' => $request->walk_in_contact ?? 'N/A',
+            'status' => $isRefill ? 'completed' : 'pending',
+            'delivered_at' => $isRefill ? now() : null,
+        ]);
+
+        $message = $isRefill
+            ? "🏪 Walk-in refill for '{$order->walk_in_customer_name}' recorded! (Order #{$order->id})"
+            : "✅ Delivery request for '{$order->walk_in_customer_name}' created! Assign a rider. (Order #{$order->id})";
+
+        return redirect()->route('owner.orders')->with('success', $message);
     }
 
     // ============================================================
@@ -240,19 +315,17 @@ class OrderController extends Controller
     // ============================================================
     public function riderOrders()
     {
-        if (!$this->isRider()) {
-            abort(403, 'Only riders can view assigned orders.');
-        }
+        if (!$this->isRider()) abort(403);
 
-        $user = Auth::user();
-
-        $assignedOrders = Order::where('rider_id', $user->id)
+        $assignedOrders = Order::where('rider_id', Auth::id())
             ->whereIn('status', ['assigned', 'on_delivery'])
+            ->with('customer')
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $completedOrders = Order::where('rider_id', $user->id)
+        $completedOrders = Order::where('rider_id', Auth::id())
             ->where('status', 'delivered')
+            ->with('customer')
             ->orderBy('delivered_at', 'desc')
             ->paginate(10);
 
@@ -265,14 +338,9 @@ class OrderController extends Controller
         return view('rider.orders', compact('assignedOrders', 'completedOrders', 'stats'));
     }
 
-    // ============================================================
-    // 🟢 RIDER: Mark Order as Delivered
-    // ============================================================
     public function markDelivered($id)
     {
-        if (!$this->isRider()) {
-            abort(403, 'Only riders can mark orders as delivered.');
-        }
+        if (!$this->isRider()) abort(403);
 
         $order = Order::where('rider_id', Auth::id())
             ->whereIn('status', ['assigned', 'on_delivery'])
@@ -282,17 +350,13 @@ class OrderController extends Controller
         $order->delivered_at = now();
         $order->save();
 
-        return redirect()->route('rider.orders')->with('success', '✅ Order #' . $order->id . ' marked as delivered!');
+        return redirect()->route('rider.orders')
+            ->with('success', '✅ Order #' . $order->id . ' marked as delivered!');
     }
 
-    // ============================================================
-    // 🟢 RIDER: Mark Order as On Delivery
-    // ============================================================
     public function markOnDelivery($id)
     {
-        if (!$this->isRider()) {
-            abort(403, 'Only riders can update delivery status.');
-        }
+        if (!$this->isRider()) abort(403);
 
         $order = Order::where('rider_id', Auth::id())
             ->where('status', 'assigned')
@@ -301,6 +365,7 @@ class OrderController extends Controller
         $order->status = 'on_delivery';
         $order->save();
 
-        return redirect()->route('rider.orders')->with('success', '🚚 Order #' . $order->id . ' is now out for delivery!');
+        return redirect()->route('rider.orders')
+            ->with('success', '🚚 Order #' . $order->id . ' is now out for delivery!');
     }
 }
