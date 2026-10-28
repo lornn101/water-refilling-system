@@ -4,8 +4,8 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('User Account Management') }}
             </h2>
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
-                Cashier
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                👑 Owner Only
             </span>
         </div>
     </x-slot>
@@ -13,7 +13,6 @@
     <div class="py-12 bg-gradient-to-br from-blue-50/50 via-cyan-50/50 to-blue-100/50 min-h-screen">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-            {{-- Success Message --}}
             @if(session('success'))
                 <div class="mb-4 p-4 bg-green-100 text-green-700 rounded-lg border border-green-200 flex items-center justify-between">
                     <span>{{ session('success') }}</span>
@@ -51,8 +50,8 @@
                     {{-- Search --}}
                     <div class="flex-1 min-w-[150px]">
                         <label class="block text-xs font-medium text-gray-500 mb-1">Search</label>
-                        <input type="text" name="search" value="{{ request('search') }}" 
-                               placeholder="Name or email..." 
+                        <input type="text" name="search" value="{{ request('search') }}"
+                               placeholder="First name, last name, or email..."
                                class="w-full border-gray-200 rounded-lg focus:border-blue-400 focus:ring-blue-400 text-sm">
                     </div>
 
@@ -64,6 +63,7 @@
                             <option value="customer" {{ request('role') == 'customer' ? 'selected' : '' }}>Customer</option>
                             <option value="rider" {{ request('role') == 'rider' ? 'selected' : '' }}>Rider</option>
                             <option value="cashier" {{ request('role') == 'cashier' ? 'selected' : '' }}>Cashier</option>
+                            <option value="owner" {{ request('role') == 'owner' ? 'selected' : '' }}>Owner</option>
                         </select>
                     </div>
 
@@ -126,22 +126,33 @@
                             @forelse($users as $user)
                                 <tr class="hover:bg-gray-50 transition {{ $user->trashed() ? 'bg-gray-100 opacity-60' : '' }}">
                                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $loop->iteration }}</td>
+
+                                    {{-- Name (full_name + deleted badge) --}}
                                     <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                                        {{ $user->name }}
+                                        {{ $user->full_name }}
                                         @if($user->trashed())
                                             <span class="ml-2 text-xs text-red-500">(Deleted)</span>
                                         @endif
                                     </td>
+
+                                    {{-- Email --}}
                                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $user->email }}</td>
+
+                                    {{-- Contact --}}
                                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $user->contact_no }}</td>
+
+                                    {{-- Role Badge (now includes owner) --}}
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            {{ $user->role === 'owner' ? 'bg-red-100 text-red-800' : '' }}
                                             {{ $user->role === 'cashier' ? 'bg-purple-100 text-purple-800' : '' }}
                                             {{ $user->role === 'rider' ? 'bg-cyan-100 text-cyan-800' : '' }}
                                             {{ $user->role === 'customer' ? 'bg-blue-100 text-blue-800' : '' }}">
                                             {{ ucfirst($user->role) }}
                                         </span>
                                     </td>
+
+                                    {{-- Status --}}
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         @if($user->trashed())
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
@@ -156,40 +167,42 @@
                                             </span>
                                         @endif
                                     </td>
+
+                                    {{-- Actions --}}
                                     <td class="px-4 py-3 whitespace-nowrap text-sm font-medium space-x-1">
                                         {{-- Approve/Reject (only for pending customers) --}}
                                         @if(!$user->trashed() && $user->status === 'pending' && $user->role === 'customer')
                                             <form action="{{ route('cashier.users.approve', $user->id) }}" method="POST" class="inline">
                                                 @csrf
-                                                <button type="submit" class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-xs">✅</button>
+                                                <button type="submit" class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-xs" title="Approve">✅</button>
                                             </form>
                                             <form action="{{ route('cashier.users.reject', $user->id) }}" method="POST" class="inline">
                                                 @csrf
-                                                <button type="submit" class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition text-xs">❌</button>
+                                                <button type="submit" class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition text-xs" title="Reject">❌</button>
                                             </form>
                                         @endif
 
                                         {{-- Edit --}}
                                         @if(!$user->trashed())
-                                            <a href="{{ route('cashier.users.edit', $user->id) }}" class="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-xs inline-block">✏️</a>
+                                            <a href="{{ route('cashier.users.edit', $user->id) }}" class="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-xs inline-block" title="Edit">✏️</a>
                                         @endif
 
                                         {{-- Delete / Restore / Force Delete --}}
                                         @if($user->trashed())
                                             <form action="{{ route('cashier.users.restore', $user->id) }}" method="POST" class="inline">
                                                 @csrf
-                                                <button type="submit" class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-xs">♻️</button>
+                                                <button type="submit" class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-xs" title="Restore">♻️</button>
                                             </form>
                                             <form action="{{ route('cashier.users.force-delete', $user->id) }}" method="POST" class="inline" onsubmit="return confirm('⚠️ Permanently delete this user? This cannot be undone!')">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="px-2 py-1 bg-red-800 text-white rounded hover:bg-red-900 transition text-xs">💀</button>
+                                                <button type="submit" class="px-2 py-1 bg-red-800 text-white rounded hover:bg-red-900 transition text-xs" title="Force Delete">💀</button>
                                             </form>
                                         @else
                                             <form action="{{ route('cashier.users.destroy', $user->id) }}" method="POST" class="inline" onsubmit="return confirm('🗑️ Delete this user? They can be restored later.')">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition text-xs">🗑️</button>
+                                                <button type="submit" class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition text-xs" title="Delete">🗑️</button>
                                             </form>
                                         @endif
                                     </td>

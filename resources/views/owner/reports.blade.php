@@ -155,7 +155,7 @@
                                         <tr class="hover:bg-gray-50 transition">
                                             <td class="px-4 py-2 text-sm text-gray-500">{{ $index + 1 }}</td>
                                             <td class="px-4 py-2 text-sm">
-                                                <p class="font-medium text-gray-800">{{ $customer->name }}</p>
+                                                <p class="font-medium text-gray-800">{{ $customer->full_name }}</p>
                                                 <p class="text-xs text-gray-500">{{ $customer->email }}</p>
                                             </td>
                                             <td class="px-4 py-2 text-center text-sm font-medium text-gray-800">{{ $customer->order_count }}</td>
@@ -193,7 +193,7 @@
                                         <tr class="hover:bg-gray-50 transition">
                                             <td class="px-4 py-2 text-sm text-gray-500">{{ $index + 1 }}</td>
                                             <td class="px-4 py-2 text-sm">
-                                                <p class="font-medium text-gray-800">{{ $rider->name }}</p>
+                                                <p class="font-medium text-gray-800">{{ $rider->full_name }}</p>
                                                 <p class="text-xs text-gray-500">{{ $rider->email }}</p>
                                             </td>
                                             <td class="px-4 py-2 text-center text-sm font-medium text-gray-800">{{ $rider->delivered_count }}</td>

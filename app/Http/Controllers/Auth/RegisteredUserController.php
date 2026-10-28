@@ -4,59 +4,48 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Auth\Events\Registered;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use App\Models\CustomerProfile;
-use App\Models\RiderProfile;
 
 class RegisteredUserController extends Controller
 {
-    /**
-     * Display the registration view.
-     */
     public function create(): View
     {
         return view('auth.register');
     }
 
     /**
-     * Handle an incoming registration request.
-     *
      * @throws ValidationException
      */
     public function store(Request $request)
     {
-        // ✅ Only customers can register through this form
-        // The 'role' field is a hidden input set to 'customer'
-        
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'first_name' => ['required', 'string', 'max:255'],
+            'middle_name' => ['nullable', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
             'contact_no' => ['required', 'string', 'max:20'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            // Customer-specific fields (always required for registration)
             'street_address' => ['required', 'string', 'max:255'],
             'barangay' => ['nullable', 'string', 'max:255'],
             'delivery_notes' => ['nullable', 'string'],
         ]);
 
-        // ✅ Create the user with role = 'customer' and status = 'pending'
         $user = User::create([
-            'name' => $request->name,
+            'first_name' => $request->first_name,
+            'middle_name' => $request->middle_name,
+            'last_name' => $request->last_name,
             'email' => $request->email,
             'contact_no' => $request->contact_no,
-            'role' => 'customer', // ✅ Always customer
+            'role' => 'customer',
             'password' => Hash::make($request->password),
-            'status' => 'pending', // ✅ Requires cashier approval
+            'status' => 'pending',
         ]);
 
-        // ✅ Always create a customer profile (since only customers register)
         CustomerProfile::create([
             'user_id' => $user->id,
             'street_address' => $request->street_address,
@@ -65,11 +54,6 @@ class RegisteredUserController extends Controller
             'preferred_delivery_time' => null,
         ]);
 
-        // ❌ DO NOT auto-login the user
-        // event(new Registered($user)); // Commented out
-        // Auth::login($user);           // Commented out
-
-        // ✅ Redirect to login with pending approval message
         return redirect()->route('login')->with('status', 'Your account has been registered and is pending approval. Please wait for the cashier to approve your account.');
     }
 }

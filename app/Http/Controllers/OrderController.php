@@ -204,8 +204,10 @@ class OrderController extends Controller
                 $q->where('id', 'like', "%{$search}%")
                   ->orWhere('walk_in_customer_name', 'like', "%{$search}%")
                   ->orWhereHas('customer', function ($q2) use ($search) {
-                      $q2->where('name', 'like', "%{$search}%");
-                  });
+    $q2->where('first_name', 'like', "%{$search}%")
+       ->orWhere('last_name', 'like', "%{$search}%")
+       ->orWhereRaw("CONCAT(first_name, ' ', COALESCE(middle_name,''), ' ', last_name) LIKE ?", ["%{$search}%"]);
+});
             });
         }
 
@@ -276,7 +278,7 @@ class OrderController extends Controller
         $order->assigned_at = now();
         $order->save();
 
-        $riderName = User::find($request->rider_id)->name;
+        $riderName = User::find($request->rider_id)->full_name;
         $notes = $oldRiderId && $oldRiderId != $request->rider_id
             ? "Rider reassigned to {$riderName}"
             : "Assigned to rider: {$riderName}";
@@ -422,7 +424,7 @@ class OrderController extends Controller
             'payment_status' => $order->payment_status,
             'payment_status_label' => $order->getPaymentStatusLabel(),
             'rider' => $order->rider ? [
-                'name' => $order->rider->name,
+            'name' => $order->rider->full_name,
                 'contact' => $order->rider->contact_no,
                 'vehicle' => $order->rider->riderProfile->vehicle_type ?? null,
                 'plate' => $order->rider->riderProfile->plate_number ?? null,

@@ -61,7 +61,7 @@
                 @if($order->rider)
                     <div class="flex justify-between mt-1">
                         <span class="text-gray-600">Rider:</span>
-                        <span>{{ $order->rider->name }}</span>
+                        <span>{{ $order->rider->full_name }}</span>
                     </div>
                 @endif
             </div>

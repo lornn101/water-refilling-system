@@ -48,7 +48,7 @@
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div>
                             <p class="text-xs text-gray-500">Name</p>
-                            <p class="font-medium">{{ $order->customer->name ?? 'N/A' }}</p>
+                            <p class="font-medium">{{ $order->customer->full_name ?? 'N/A' }}</p>
                         </div>
                         <div>
                             <p class="text-xs text-gray-500">Contact</p>
@@ -73,7 +73,7 @@
                     <div class="flex flex-wrap items-center gap-4">
                         <div>
                             <p class="text-xs text-gray-500">Current Rider</p>
-                            <p class="font-medium">{{ $order->rider->name ?? 'Not Assigned' }}</p>
+                            <p class="font-medium">{{ $order->rider->full_name ?? 'Not Assigned' }}</p>
                         </div>
                         @if($order->status === 'pending' || $order->status === 'assigned')
                             <form method="POST" action="{{ route('owner.assign-rider', $order->id) }}" class="flex items-center gap-2">
@@ -81,7 +81,7 @@
                                 <select name="rider_id" class="border-gray-300 rounded-lg focus:border-blue-400 focus:ring-blue-400 text-sm">
                                     <option value="">Select Rider</option>
                                     @foreach($riders as $rider)
-                                        <option value="{{ $rider->id }}" {{ $order->rider_id == $rider->id ? 'selected' : '' }}>{{ $rider->name }}</option>
+                                        <option value="{{ $rider->id }}" {{ $order->rider_id == $rider->id ? 'selected' : '' }}>{{ $rider->full_name }}</option>
                                     @endforeach
                                 </select>
                                 <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium">Assign</button>

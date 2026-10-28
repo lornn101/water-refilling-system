@@ -27,10 +27,10 @@
                         {{ Auth::user()->role === 'cashier' ? 'bg-purple-600' : '' }}
                         {{ Auth::user()->role === 'rider' ? 'bg-cyan-600' : '' }}
                         {{ Auth::user()->role === 'customer' ? 'bg-blue-600' : '' }}">
-                        {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                        {{ strtoupper(substr(Auth::user()->first_name ?? 'U', 0, 1)) }}
                     </div>
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-800">Hello, {{ Auth::user()->name }}! 👋</h1>
+                        <h1 class="text-2xl font-bold text-gray-800">Hello, {{ Auth::user()->full_name }}! 👋</h1>
                         <p class="text-sm text-gray-500">Welcome to Poblacion Water Refilling Station</p>
                     </div>
                 </div>

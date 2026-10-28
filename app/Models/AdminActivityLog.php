@@ -42,10 +42,10 @@ class AdminActivityLog extends Model
 
         return static::create([
             'admin_id' => $admin?->id,
-            'admin_name' => $admin?->name ?? 'System',
+            'admin_name' => $admin?->full_name ?? 'System',
             'action' => $action,
             'target_user_id' => $targetUser?->id,
-            'target_user_name' => $targetUser?->name ?? 'Unknown',
+            'target_user_name' => $targetUser?->full_name ?? 'Unknown',
             'description' => $description,
             'ip_address' => request()->ip(),
         ]);

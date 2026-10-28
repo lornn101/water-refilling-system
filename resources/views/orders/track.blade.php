@@ -157,10 +157,10 @@
                             <h3 class="text-sm font-semibold text-cyan-800 uppercase tracking-wider mb-3">🛵 Your Rider</h3>
                             <div class="flex items-center mb-3">
                                 <div class="w-12 h-12 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                    {{ strtoupper(substr($order->rider->name, 0, 1)) }}
+                                    {{ strtoupper(substr($order->rider->full_name, 0, 1)) }}
                                 </div>
                                 <div class="ml-3">
-                                    <p class="font-semibold text-gray-800">{{ $order->rider->name }}</p>
+                                    <p class="font-semibold text-gray-800">{{ $order->rider->full_name }}</p>
                                     <p class="text-xs text-gray-500">
                                         {{ $order->rider->riderProfile->vehicle_type ?? 'Rider' }}
                                         @if($order->rider->riderProfile->plate_number)

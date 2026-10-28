@@ -129,7 +129,8 @@
                                 @if($order->paidBy)
                                     <div>
                                         <p class="text-xs text-gray-500">Recorded By</p>
-                                        <p class="font-medium">{{ $order->paidBy->name }}</p>
+                                        {{-- ✅ FIX: ->name → ->full_name --}}
+                                        <p class="font-medium">{{ $order->paidBy->full_name }}</p>
                                     </div>
                                 @endif
                             </div>
@@ -176,7 +177,8 @@
                     <div class="flex flex-wrap items-center gap-4">
                         <div>
                             <p class="text-xs text-gray-500">Current Rider</p>
-                            <p class="font-medium text-gray-800">{{ $order->rider->name ?? 'Not Assigned' }}</p>
+                            {{-- ✅ FIX: ->name → ->full_name --}}
+                            <p class="font-medium text-gray-800">{{ $order->rider->full_name ?? 'Not Assigned' }}</p>
                         </div>
                         @if($order->status === 'pending' || $order->status === 'assigned')
                             <form method="POST" action="{{ route('owner.assign-rider', $order->id) }}" class="flex items-center gap-2">
@@ -185,7 +187,8 @@
                                     <option value="">Select Rider</option>
                                     @foreach($riders as $rider)
                                         <option value="{{ $rider->id }}" {{ $order->rider_id == $rider->id ? 'selected' : '' }}>
-                                            {{ $rider->name }} ({{ $rider->riderProfile->vehicle_type ?? 'N/A' }})
+                                            {{-- ✅ FIX: ->name → ->full_name --}}
+                                            {{ $rider->full_name }} ({{ $rider->riderProfile->vehicle_type ?? 'N/A' }})
                                         </option>
                                     @endforeach
                                 </select>
@@ -225,7 +228,7 @@
                     </form>
                 </div>
 
-                {{-- A7: Activity Timeline --}}
+                {{-- Activity Timeline --}}
                 <div class="p-6 bg-gray-50">
                     <h3 class="font-semibold text-gray-800 mb-3">📋 Activity Timeline</h3>
                     @if($order->statusLogs->isEmpty())

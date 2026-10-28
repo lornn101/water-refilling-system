@@ -11,7 +11,10 @@
                 <div class="p-6 text-gray-900">
                     <h3 class="text-lg font-medium">Personal Information</h3>
                     <div class="mt-4 space-y-2">
-                        <p><strong>Name:</strong> {{ Auth::user()->name }}</p>
+                        <p><strong>First Name:</strong> {{ Auth::user()->first_name }}</p>
+                        <p><strong>Middle Name:</strong> {{ Auth::user()->middle_name ?? '—' }}</p>
+                        <p><strong>Last Name:</strong> {{ Auth::user()->last_name }}</p>
+                        <p><strong>Full Name:</strong> {{ Auth::user()->full_name }}</p>
                         <p><strong>Email:</strong> {{ Auth::user()->email }}</p>
                         <p><strong>Contact No.:</strong> {{ Auth::user()->contact_no }}</p>
                         <p><strong>Role:</strong> {{ ucfirst(Auth::user()->role) }}</p>

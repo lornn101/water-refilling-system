@@ -17,9 +17,6 @@ class OrderStatusLog extends Model
         'notes',
     ];
 
-    // ============================================================
-    // RELATIONSHIPS
-    // ============================================================
     public function order()
     {
         return $this->belongsTo(Order::class);
@@ -27,12 +24,9 @@ class OrderStatusLog extends Model
 
     public function changedBy()
     {
-        return $this->belongsTo(User::class, 'changed_by');
+        return $this->belongsTo(User::class, 'changed_by')->withTrashed();
     }
 
-    // ============================================================
-    // DISPLAY HELPERS
-    // ============================================================
     public function getStatusLabel()
     {
         return match ($this->status) {
@@ -81,12 +75,13 @@ class OrderStatusLog extends Model
             return 'System';
         }
 
+        // ✅ FIX: ->name → ->full_name
         return match ($this->changedBy->role) {
-            'owner' => '👑 ' . $this->changedBy->name,
-            'cashier' => '💼 ' . $this->changedBy->name,
-            'rider' => '🛵 ' . $this->changedBy->name,
-            'customer' => '👤 ' . $this->changedBy->name,
-            default => $this->changedBy->name,
+            'owner' => '👑 ' . $this->changedBy->full_name,
+            'cashier' => '💼 ' . $this->changedBy->full_name,
+            'rider' => '🛵 ' . $this->changedBy->full_name,
+            'customer' => '👤 ' . $this->changedBy->full_name,
+            default => $this->changedBy->full_name,
         };
     }
 }

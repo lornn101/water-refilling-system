@@ -10,31 +10,35 @@ class OwnerAccountSeeder extends Seeder
 {
     public function run(): void
     {
-        // ✅ 1. Create or UPDATE the Owner Account (Force role to 'owner')
+        // ✅ Owner Account
         User::updateOrCreate(
             ['email' => 'owner@owner.com'],
             [
-                'name' => 'System Owner',
+                'first_name' => 'System',
+                'middle_name' => null,
+                'last_name' => 'Owner',
                 'contact_no' => '09123456789',
-                'role' => 'owner',          // ✅ Forces role to 'owner'
+                'role' => 'owner',
                 'status' => 'approved',
                 'password' => Hash::make('owner123'),
             ]
         );
 
-        // ✅ 2. Create the Cashier Account
+        // ✅ Cashier Account
         User::updateOrCreate(
             ['email' => 'cashier@cashier.com'],
             [
-                'name' => 'Cashier User',
+                'first_name' => 'Cashier',
+                'middle_name' => null,
+                'last_name' => 'User',
                 'contact_no' => '09123456780',
-                'role' => 'cashier',         // ✅ Role is 'cashier'
+                'role' => 'cashier',
                 'status' => 'approved',
                 'password' => Hash::make('cashier123'),
             ]
         );
 
-        $this->command->info('✅ Owner account updated/created: owner@owner.com / password: owner123 (role: owner)');
-        $this->command->info('✅ Cashier account created: cashier@cashier.com / password: cashier123 (role: cashier)');
+        $this->command->info('✅ Owner: owner@owner.com / owner123 (role: owner)');
+        $this->command->info('✅ Cashier: cashier@cashier.com / cashier123 (role: cashier)');
     }
 }

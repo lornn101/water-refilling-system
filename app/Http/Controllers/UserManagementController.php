@@ -11,9 +11,6 @@ use Illuminate\Support\Facades\Hash;
 
 class UserManagementController extends Controller
 {
-    /**
-     * Display user management dashboard with search, filter, and pagination.
-     */
     public function index(Request $request)
     {
         if (Auth::user()->role !== 'owner') {
@@ -25,8 +22,11 @@ class UserManagementController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                $q->where('first_name', 'like', "%{$search}%")
+                  ->orWhere('middle_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhereRaw("CONCAT(first_name, ' ', COALESCE(middle_name,''), ' ', last_name) LIKE ?", ["%{$search}%"]);
             });
         }
 
@@ -58,18 +58,10 @@ class UserManagementController extends Controller
         $deletedCount = User::onlyTrashed()->count();
 
         return view('cashier.user-management', compact(
-            'users',
-            'totalUsers',
-            'pendingCount',
-            'approvedCount',
-            'rejectedCount',
-            'deletedCount'
+            'users', 'totalUsers', 'pendingCount', 'approvedCount', 'rejectedCount', 'deletedCount'
         ));
     }
 
-    /**
-     * Approve a user account.
-     */
     public function approve($id)
     {
         if (Auth::user()->role !== 'owner') abort(403);
@@ -78,15 +70,11 @@ class UserManagementController extends Controller
         $user->status = 'approved';
         $user->save();
 
-        // ✅ Log activity
         AdminActivityLog::log('approved', $user, "Approved user account ({$user->email})");
 
-        return redirect()->route('cashier.users')->with('success', "✅ User '{$user->name}' has been approved successfully.");
+        return redirect()->route('cashier.users')->with('success', "✅ User '{$user->full_name}' has been approved successfully.");
     }
 
-    /**
-     * Reject a user account.
-     */
     public function reject($id)
     {
         if (Auth::user()->role !== 'owner') abort(403);
@@ -95,15 +83,11 @@ class UserManagementController extends Controller
         $user->status = 'rejected';
         $user->save();
 
-        // ✅ Log activity
         AdminActivityLog::log('rejected', $user, "Rejected user account ({$user->email})");
 
-        return redirect()->route('cashier.users')->with('success', "❌ User '{$user->name}' has been rejected.");
+        return redirect()->route('cashier.users')->with('success', "❌ User '{$user->full_name}' has been rejected.");
     }
 
-    /**
-     * Show edit form for a user.
-     */
     public function edit($id)
     {
         if (Auth::user()->role !== 'owner') abort(403);
@@ -112,9 +96,6 @@ class UserManagementController extends Controller
         return view('cashier.user-edit', compact('user'));
     }
 
-    /**
-     * Update a user's details.
-     */
     public function update(Request $request, $id)
     {
         if (Auth::user()->role !== 'owner') abort(403);
@@ -122,7 +103,9 @@ class UserManagementController extends Controller
         $user = User::withTrashed()->findOrFail($id);
 
         $rules = [
-            'name' => ['required', 'string', 'max:255'],
+            'first_name' => ['required', 'string', 'max:255'],
+            'middle_name' => ['nullable', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $id],
             'contact_no' => ['required', 'string', 'max:20'],
             'role' => ['required', 'in:customer,rider,cashier,owner'],
@@ -135,9 +118,10 @@ class UserManagementController extends Controller
         $request->validate($rules);
 
         $oldRole = $user->role;
-        $oldName = $user->name;
 
-        $user->name = $request->name;
+        $user->first_name = $request->first_name;
+        $user->middle_name = $request->middle_name;
+        $user->last_name = $request->last_name;
         $user->email = $request->email;
         $user->contact_no = $request->contact_no;
         $user->role = $request->role;
@@ -148,18 +132,14 @@ class UserManagementController extends Controller
 
         $user->save();
 
-        // ✅ Log activity
         $description = $oldRole !== $user->role
             ? "Changed role from '{$oldRole}' to '{$user->role}'"
             : "Updated user account details ({$user->email})";
         AdminActivityLog::log('edited', $user, $description);
 
-        return redirect()->route('cashier.users')->with('success', "✏️ User '{$user->name}' has been updated successfully.");
+        return redirect()->route('cashier.users')->with('success', "✏️ User '{$user->full_name}' has been updated successfully.");
     }
 
-    /**
-     * Soft delete a user.
-     */
     public function destroy($id)
     {
         if (Auth::user()->role !== 'owner') abort(403);
@@ -167,15 +147,11 @@ class UserManagementController extends Controller
         $user = User::findOrFail($id);
         $user->delete();
 
-        // ✅ Log activity
         AdminActivityLog::log('deleted', $user, "Soft-deleted user account ({$user->email})");
 
-        return redirect()->route('cashier.users')->with('success', "🗑️ User '{$user->name}' has been deleted.");
+        return redirect()->route('cashier.users')->with('success', "🗑️ User '{$user->full_name}' has been deleted.");
     }
 
-    /**
-     * Restore a soft-deleted user.
-     */
     public function restore($id)
     {
         if (Auth::user()->role !== 'owner') abort(403);
@@ -183,49 +159,40 @@ class UserManagementController extends Controller
         $user = User::onlyTrashed()->findOrFail($id);
         $user->restore();
 
-        // ✅ Log activity
         AdminActivityLog::log('restored', $user, "Restored deleted user account ({$user->email})");
 
-        return redirect()->route('cashier.users')->with('success', "♻️ User '{$user->name}' has been restored.");
+        return redirect()->route('cashier.users')->with('success', "♻️ User '{$user->full_name}' has been restored.");
     }
 
-    /**
-     * Permanently delete a user.
-     */
     public function forceDelete($id)
     {
         if (Auth::user()->role !== 'owner') abort(403);
 
         $user = User::onlyTrashed()->findOrFail($id);
-        $userName = $user->name;
+        $fullName = $user->full_name;
         $userEmail = $user->email;
 
-        // ✅ Log BEFORE force delete (so user exists at log time)
         AdminActivityLog::log('force_deleted', $user, "Permanently deleted user account ({$userEmail})");
 
         $user->forceDelete();
 
-        return redirect()->route('cashier.users')->with('success', "🗑️ User '{$userName}' has been permanently deleted.");
+        return redirect()->route('cashier.users')->with('success', "🗑️ User '{$fullName}' has been permanently deleted.");
     }
 
-    /**
-     * Show the create rider form.
-     */
     public function createRider()
     {
         if (Auth::user()->role !== 'owner') abort(403);
         return view('cashier.create-rider');
     }
 
-    /**
-     * Store a new rider account.
-     */
     public function storeRider(Request $request)
     {
         if (Auth::user()->role !== 'owner') abort(403);
 
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'first_name' => ['required', 'string', 'max:255'],
+            'middle_name' => ['nullable', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'contact_no' => ['required', 'string', 'max:20'],
             'vehicle_type' => ['required', 'string', 'max:255'],
@@ -234,7 +201,9 @@ class UserManagementController extends Controller
         ]);
 
         $user = User::create([
-            'name' => $request->name,
+            'first_name' => $request->first_name,
+            'middle_name' => $request->middle_name,
+            'last_name' => $request->last_name,
             'email' => $request->email,
             'contact_no' => $request->contact_no,
             'role' => 'rider',
@@ -249,9 +218,8 @@ class UserManagementController extends Controller
             'availability_status' => 'available',
         ]);
 
-        // ✅ Log activity
         AdminActivityLog::log('created_rider', $user, "Created new rider account ({$user->email})");
 
-        return redirect()->route('cashier.users')->with('success', "🛵 Rider '{$user->name}' created successfully!");
+        return redirect()->route('cashier.users')->with('success', "🛵 Rider '{$user->full_name}' created successfully!");
     }
 }

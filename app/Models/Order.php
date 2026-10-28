@@ -123,13 +123,13 @@ class Order extends Model
     // ============================================================
     // DISPLAY HELPERS
     // ============================================================
-    public function getCustomerName()
-    {
-        if ($this->is_walk_in) {
-            return $this->walk_in_customer_name ?? 'Walk-in Customer';
-        }
-        return $this->customer->name ?? 'N/A';
+public function getCustomerName()
+{
+    if ($this->is_walk_in) {
+        return $this->walk_in_customer_name ?? 'Walk-in Customer';
     }
+    return $this->customer->full_name ?? 'N/A';
+}
 
     public function getCustomerContact()
     {

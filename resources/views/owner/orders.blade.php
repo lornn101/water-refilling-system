@@ -27,7 +27,6 @@
                 </div>
             @endif
 
-            {{-- Header with New Walk-in Button --}}
             <div class="flex justify-between items-center mb-6">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-800">All Orders</h1>
@@ -48,7 +47,6 @@
                 </div>
             </div>
 
-            {{-- Revenue Banner --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div class="bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
                     <p class="text-emerald-100 text-sm uppercase tracking-wider">Total Revenue (Paid)</p>
@@ -60,7 +58,6 @@
                 </div>
             </div>
 
-            {{-- Stats --}}
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
                 <div class="bg-white rounded-xl shadow p-4 text-center border-l-4 border-gray-500">
                     <p class="text-2xl font-bold text-gray-600">{{ $totalOrders }}</p>
@@ -88,7 +85,6 @@
                 </div>
             </div>
 
-            {{-- Filters --}}
             <div class="bg-white rounded-xl shadow-lg p-4 mb-6">
                 <form method="GET" action="{{ route('owner.orders') }}" class="flex flex-wrap gap-3 items-end">
                     <div class="flex-1 min-w-[150px]">
@@ -129,7 +125,6 @@
                 </form>
             </div>
 
-            {{-- Orders Table --}}
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -157,7 +152,8 @@
                                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">{{ $order->getCustomerName() }}</td>
                                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $order->quantity }}</td>
                                     <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-800">₱{{ number_format($order->total_amount, 2) }}</td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $order->rider->name ?? '—' }}</td>
+                                    {{-- ✅ FIX: ->name → ->full_name --}}
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $order->rider->full_name ?? '—' }}</td>
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $order->getStatusBadgeColor() }}">
                                             {{ $order->getStatusIcon() }} {{ $order->getStatusLabel() }}

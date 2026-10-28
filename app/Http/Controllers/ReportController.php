@@ -15,9 +15,6 @@ class ReportController extends Controller
         return Auth::check() && in_array(Auth::user()->role, ['owner', 'cashier']);
     }
 
-    /**
-     * Parse date range from request (with fallbacks + safety caps).
-     */
     private function parseDateRange(Request $request): array
     {
         try {
@@ -33,12 +30,10 @@ class ReportController extends Controller
             $to = now()->endOfDay();
         }
 
-        // Swap if reversed
         if ($from->gt($to)) {
             [$from, $to] = [$to, $from];
         }
 
-        // Cap at 365 days
         if ($from->diffInDays($to) > 365) {
             $from = $to->copy()->subDays(365);
         }
@@ -46,14 +41,8 @@ class ReportController extends Controller
         return [$from, $to];
     }
 
-    /**
-     * Build all report data for a date range.
-     */
     private function buildReportData(Carbon $from, Carbon $to): array
     {
-        // ============================================
-        // SUMMARY
-        // ============================================
         $totalRevenue = (float) Order::where('payment_status', 'paid')
             ->whereNotNull('paid_at')
             ->whereBetween('paid_at', [$from, $to])
@@ -63,7 +52,6 @@ class ReportController extends Controller
         $totalGallons = (int) Order::whereBetween('created_at', [$from, $to])->sum('quantity');
         $avgOrderValue = $totalOrders > 0 ? $totalRevenue / $totalOrders : 0;
 
-        // Outstanding = all unpaid delivered/completed (current debt, all-time)
         $outstandingAmount = (float) Order::where('payment_status', 'unpaid')
             ->whereIn('status', ['delivered', 'completed'])
             ->sum('total_amount');
@@ -77,9 +65,6 @@ class ReportController extends Controller
             ->whereBetween('created_at', [$from, $to])
             ->count();
 
-        // ============================================
-        // DAILY BREAKDOWN (fills in zero days)
-        // ============================================
         $dailyStats = Order::whereBetween('created_at', [$from, $to])
             ->selectRaw('DATE(created_at) as date, COUNT(*) as orders, SUM(quantity) as gallons')
             ->groupBy('date')
@@ -110,9 +95,6 @@ class ReportController extends Controller
             $current->addDay();
         }
 
-        // ============================================
-        // STATUS DISTRIBUTION
-        // ============================================
         $statusCounts = Order::whereBetween('created_at', [$from, $to])
             ->selectRaw('status, COUNT(*) as count')
             ->groupBy('status')
@@ -128,9 +110,6 @@ class ReportController extends Controller
             'cancelled' => $statusCounts['cancelled'] ?? 0,
         ];
 
-        // ============================================
-        // PAYMENT METHODS
-        // ============================================
         $paymentCounts = Order::where('payment_status', 'paid')
             ->whereNotNull('paid_at')
             ->whereBetween('paid_at', [$from, $to])
@@ -154,9 +133,6 @@ class ReportController extends Controller
             ],
         ];
 
-        // ============================================
-        // TOP CUSTOMERS
-        // ============================================
         $topCustomers = User::where('role', 'customer')
             ->whereHas('orders', function ($q) use ($from, $to) {
                 $q->whereBetween('created_at', [$from, $to]);
@@ -176,9 +152,6 @@ class ReportController extends Controller
             ->limit(10)
             ->get();
 
-        // ============================================
-        // RIDER PERFORMANCE
-        // ============================================
         $riderPerformance = User::where('role', 'rider')
             ->withCount(['assignedOrders as delivered_count' => function ($q) use ($from, $to) {
                 $q->where('status', 'delivered')
@@ -194,7 +167,19 @@ class ReportController extends Controller
             ->orderByDesc('delivered_count')
             ->get();
 
-                return [
+        // ============================================
+        // A8 - PROJECTIONS (now correctly defined INSIDE buildReportData)
+        // ============================================
+        $daysInPeriod = $from->diffInDays($to) + 1;
+        $dailyAvgRevenue = $daysInPeriod > 0 ? $totalRevenue / $daysInPeriod : 0;
+        $dailyAvgOrders = $daysInPeriod > 0 ? $totalOrders / $daysInPeriod : 0;
+        $dailyAvgGallons = $daysInPeriod > 0 ? $totalGallons / $daysInPeriod : 0;
+
+        $projected30dRevenue = $dailyAvgRevenue * 30;
+        $projected30dOrders = (int) round($dailyAvgOrders * 30);
+        $projected30dGallons = (int) round($dailyAvgGallons * 30);
+
+        return [
             'from' => $from,
             'to' => $to,
             'totalRevenue' => $totalRevenue,
@@ -224,9 +209,6 @@ class ReportController extends Controller
         ];
     }
 
-    /**
-     * Show the reports page.
-     */
     public function index(Request $request)
     {
         if (!$this->canViewReports()) {
@@ -235,22 +217,10 @@ class ReportController extends Controller
 
         [$from, $to] = $this->parseDateRange($request);
         $data = $this->buildReportData($from, $to);
-        $daysInPeriod = $from->diffInDays($to) + 1;
-
-        $dailyAvgRevenue = $daysInPeriod > 0 ? $totalRevenue / $daysInPeriod : 0;
-        $dailyAvgOrders = $daysInPeriod > 0 ? $totalOrders / $daysInPeriod : 0;
-        $dailyAvgGallons = $daysInPeriod > 0 ? $totalGallons / $daysInPeriod : 0;
-
-        $projected30dRevenue = $dailyAvgRevenue * 30;
-        $projected30dOrders = (int) round($dailyAvgOrders * 30);
-        $projected30dGallons = (int) round($dailyAvgGallons * 30);
 
         return view('owner.reports', $data);
     }
 
-    /**
-     * Export report as CSV (line-by-line orders).
-     */
     public function exportCsv(Request $request)
     {
         if (!$this->canViewReports()) {
@@ -273,36 +243,22 @@ class ReportController extends Controller
 
         $callback = function () use ($orders, $from, $to) {
             $file = fopen('php://output', 'w');
-
-            // BOM for Excel UTF-8 compatibility
             fwrite($file, "\xEF\xBB\xBF");
 
-            // Header info
             fputcsv($file, ['Poblacion Water Refilling Station — Order Report']);
             fputcsv($file, ['From', $from->format('M d, Y')]);
             fputcsv($file, ['To', $to->format('M d, Y')]);
             fputcsv($file, ['Generated', now()->format('M d, Y h:i A')]);
-            fputcsv($file, ['Generated By', Auth::user()->name . ' (' . ucfirst(Auth::user()->role) . ')']);
+
+            // ✅ FIX: Auth::user()->name → full_name
+            fputcsv($file, ['Generated By', Auth::user()->full_name . ' (' . ucfirst(Auth::user()->role) . ')']);
             fputcsv($file, []);
 
-            // Line items
             fputcsv($file, [
-                'Order #',
-                'Date Placed',
-                'Customer',
-                'Contact',
-                'Type',
-                'Quantity',
-                'Unit Price',
-                'Delivery Fee',
-                'Total Amount',
-                'Status',
-                'Payment Status',
-                'Payment Method',
-                'Reference',
-                'Rider',
-                'Delivered At',
-                'Paid At',
+                'Order #', 'Date Placed', 'Customer', 'Contact', 'Type',
+                'Quantity', 'Unit Price', 'Delivery Fee', 'Total Amount',
+                'Status', 'Payment Status', 'Payment Method', 'Reference',
+                'Rider', 'Delivered At', 'Paid At',
             ]);
 
             foreach ($orders as $order) {
@@ -320,7 +276,7 @@ class ReportController extends Controller
                     $order->getPaymentStatusLabel(),
                     $order->payment_method !== 'none' ? $order->payment_method : '',
                     $order->payment_reference ?? '',
-                    $order->rider->name ?? '',
+                    $order->rider->full_name ?? '', // ✅ FIX
                     $order->delivered_at?->format('Y-m-d H:i') ?? '',
                     $order->paid_at?->format('Y-m-d H:i') ?? '',
                 ]);
