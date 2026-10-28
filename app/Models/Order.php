@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class Order extends Model
 {
@@ -16,20 +17,32 @@ class Order extends Model
         'walk_in_customer_name',
         'walk_in_contact',
         'quantity',
+        'unit_price',
+        'delivery_fee',
+        'total_amount',
         'delivery_address',
         'delivery_notes',
         'contact_number',
         'status',
+        'payment_status',
+        'payment_method',
+        'payment_reference',
         'delivery_date',
         'assigned_at',
         'delivered_at',
+        'paid_at',
+        'paid_by',
     ];
 
     protected $casts = [
         'is_walk_in' => 'boolean',
+        'unit_price' => 'decimal:2',
+        'delivery_fee' => 'decimal:2',
+        'total_amount' => 'decimal:2',
         'delivery_date' => 'datetime',
         'assigned_at' => 'datetime',
         'delivered_at' => 'datetime',
+        'paid_at' => 'datetime',
     ];
 
     // ============================================================
@@ -45,6 +58,16 @@ class Order extends Model
         return $this->belongsTo(User::class, 'rider_id');
     }
 
+    public function paidBy()
+    {
+        return $this->belongsTo(User::class, 'paid_by');
+    }
+
+    public function statusLogs()
+    {
+        return $this->hasMany(OrderStatusLog::class)->orderBy('created_at', 'desc');
+    }
+
     // ============================================================
     // STATUS HELPERS
     // ============================================================
@@ -53,35 +76,48 @@ class Order extends Model
     public function isOnDelivery() { return $this->status === 'on_delivery'; }
     public function isDelivered()  { return $this->status === 'delivered'; }
     public function isCancelled()  { return $this->status === 'cancelled'; }
-    public function isCompleted()  { return $this->status === 'completed'; } // ✅ NEW
+    public function isCompleted()  { return $this->status === 'completed'; }
+
+    public function isPaid()       { return $this->payment_status === 'paid'; }
+    public function isUnpaid()     { return $this->payment_status === 'unpaid'; }
+    public function isRefunded()   { return $this->payment_status === 'refunded'; }
 
     // ============================================================
     // BUSINESS LOGIC
     // ============================================================
-
-    /**
-     * Can a customer modify this order?
-     * Only pending, non-walk-in orders can be modified by the customer.
-     */
     public function canBeModified()
     {
         return !$this->is_walk_in && $this->status === 'pending';
     }
 
-    /**
-     * Was this order modified after creation?
-     */
     public function wasModified()
     {
         return $this->updated_at && $this->updated_at->gt($this->created_at->addSecond());
     }
 
-    /**
-     * Is this order a walk-in refill (immediately completed at station)?
-     */
     public function isWalkInRefill()
     {
         return $this->is_walk_in && $this->status === 'completed';
+    }
+
+    public function recalculateTotal()
+    {
+        $this->total_amount = ($this->quantity * $this->unit_price) + $this->delivery_fee;
+        return $this;
+    }
+
+    /**
+     * Log a status change for this order.
+     */
+    public function logStatusChange($oldStatus, $newStatus, $changedBy = null, $notes = null)
+    {
+        return OrderStatusLog::create([
+            'order_id' => $this->id,
+            'status' => $newStatus,
+            'previous_status' => $oldStatus,
+            'changed_by' => $changedBy ?? Auth::id(),
+            'notes' => $notes,
+        ]);
     }
 
     // ============================================================
@@ -103,9 +139,6 @@ class Order extends Model
         return $this->customer->contact_no ?? $this->contact_number;
     }
 
-    /**
-     * Human-readable status label
-     */
     public function getStatusLabel()
     {
         return match ($this->status) {
@@ -143,5 +176,61 @@ class Order extends Model
             'cancelled' => '❌',
             default => '📦',
         };
+    }
+
+    public function getPaymentStatusLabel()
+    {
+        return match ($this->payment_status) {
+            'paid' => 'Paid',
+            'unpaid' => 'Unpaid',
+            'refunded' => 'Refunded',
+            default => 'Unknown',
+        };
+    }
+
+    public function getPaymentStatusBadgeColor()
+    {
+        return match ($this->payment_status) {
+            'paid' => 'bg-green-100 text-green-800',
+            'unpaid' => 'bg-orange-100 text-orange-800',
+            'refunded' => 'bg-gray-100 text-gray-800',
+            default => 'bg-gray-100 text-gray-800',
+        };
+    }
+
+    public function getPaymentMethodLabel()
+    {
+        return match ($this->payment_method) {
+            'cash' => '💵 Cash',
+            'gcash' => '📱 GCash',
+            'bank_transfer' => '🏦 Bank Transfer',
+            'none' => '—',
+            default => '—',
+        };
+    }
+
+    /**
+     * Get the ordered progression steps for the timeline.
+     */
+    public function getTimelineSteps()
+    {
+        if ($this->status === 'cancelled') {
+            return ['pending', 'cancelled'];
+        }
+        if ($this->is_walk_in && $this->status === 'completed') {
+            return ['completed'];
+        }
+
+        return ['pending', 'assigned', 'on_delivery', 'delivered'];
+    }
+
+    /**
+     * Get the current step index (0-based) in the timeline.
+     */
+    public function getCurrentStepIndex()
+    {
+        $steps = $this->getTimelineSteps();
+        $index = array_search($this->status, $steps);
+        return $index === false ? 0 : $index;
     }
 }

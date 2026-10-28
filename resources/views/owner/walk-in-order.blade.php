@@ -47,39 +47,37 @@
                             <x-input-error :messages="$errors->get('walk_in_contact')" class="mt-2" />
                         </div>
 
-                        <div class="md:col-span-2">
+                        <div>
                             <x-input-label for="quantity" :value="__('Number of Gallons')" />
-                            <input id="quantity" name="quantity" type="number" min="1" max="50" value="{{ old('quantity', 1) }}" class="block mt-1 w-full border-gray-300 focus:border-blue-400 focus:ring-blue-400 rounded-lg shadow-sm" required />
+                            <input id="quantity" name="quantity" type="number" min="1" max="50" value="{{ old('quantity', 1) }}" oninput="calculateTotal()" class="block mt-1 w-full border-gray-300 focus:border-blue-400 focus:ring-blue-400 rounded-lg shadow-sm" required />
                             <x-input-error :messages="$errors->get('quantity')" class="mt-2" />
                         </div>
 
-                        {{-- Order Type Selection --}}
+                        {{-- Order Type --}}
                         <div class="md:col-span-2 p-4 bg-cyan-50/50 rounded-xl border border-cyan-100">
                             <p class="text-xs font-semibold text-cyan-700 uppercase tracking-wider mb-3">🎯 Order Type</p>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {{-- Walk-in Refill --}}
                                 <label class="flex items-start p-4 bg-white rounded-lg border-2 border-gray-200 cursor-pointer hover:border-cyan-400 transition has-[:checked]:border-cyan-600 has-[:checked]:bg-cyan-50">
-                                    <input type="radio" name="order_type" value="refill" {{ old('order_type', 'refill') == 'refill' ? 'checked' : '' }} class="mt-1 text-cyan-600 focus:ring-cyan-500" onchange="toggleDeliveryFields()">
+                                    <input type="radio" name="order_type" value="refill" {{ old('order_type', 'refill') == 'refill' ? 'checked' : '' }} class="mt-1 text-cyan-600 focus:ring-cyan-500" onchange="toggleDeliveryFields(); calculateTotal()">
                                     <div class="ml-3">
                                         <p class="font-semibold text-gray-800">🏪 Walk-in Refill</p>
-                                        <p class="text-xs text-gray-500 mt-1">Customer refills at station and takes water home immediately</p>
-                                        <p class="text-xs text-emerald-600 font-medium mt-1">✓ Order marked as <strong>Completed</strong> right away</p>
+                                        <p class="text-xs text-gray-500 mt-1">Customer refills at station</p>
+                                        <p class="text-xs text-emerald-600 font-medium mt-1">✓ No delivery fee</p>
                                     </div>
                                 </label>
 
-                                {{-- Delivery Request --}}
                                 <label class="flex items-start p-4 bg-white rounded-lg border-2 border-gray-200 cursor-pointer hover:border-cyan-400 transition has-[:checked]:border-cyan-600 has-[:checked]:bg-cyan-50">
-                                    <input type="radio" name="order_type" value="delivery" {{ old('order_type') == 'delivery' ? 'checked' : '' }} class="mt-1 text-cyan-600 focus:ring-cyan-500" onchange="toggleDeliveryFields()">
+                                    <input type="radio" name="order_type" value="delivery" {{ old('order_type') == 'delivery' ? 'checked' : '' }} class="mt-1 text-cyan-600 focus:ring-cyan-500" onchange="toggleDeliveryFields(); calculateTotal()">
                                     <div class="ml-3">
                                         <p class="font-semibold text-gray-800">🛵 Delivery Request</p>
-                                        <p class="text-xs text-gray-500 mt-1">Customer wants water delivered to their home later</p>
-                                        <p class="text-xs text-blue-600 font-medium mt-1">→ Requires rider assignment</p>
+                                        <p class="text-xs text-gray-500 mt-1">Needs rider</p>
+                                        <p class="text-xs text-blue-600 font-medium mt-1">+ ₱{{ number_format($deliveryFee, 2) }} delivery fee</p>
                                     </div>
                                 </label>
                             </div>
                         </div>
 
-                        {{-- Delivery Address (only shown when delivery is selected) --}}
+                        {{-- Delivery Address --}}
                         <div id="delivery-fields" class="md:col-span-2 hidden">
                             <div class="p-4 bg-blue-50/50 rounded-xl border border-blue-100">
                                 <x-input-label for="delivery_address" :value="__('Delivery Address')" />
@@ -93,6 +91,34 @@
                             <textarea id="delivery_notes" name="delivery_notes" rows="2" placeholder="Any additional notes..." class="block mt-1 w-full border-gray-300 focus:border-blue-400 focus:ring-blue-400 rounded-lg shadow-sm">{{ old('delivery_notes') }}</textarea>
                             <x-input-error :messages="$errors->get('delivery_notes')" class="mt-2" />
                         </div>
+                    </div>
+
+                    {{-- Total Preview --}}
+                    <div class="mt-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-xs text-gray-500 uppercase tracking-wider">Live Total Calculation</p>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    <span id="preview-qty">1</span> gallon × ₱{{ number_format($pricePerGallon, 2) }}
+                                    <span id="preview-fee" class="hidden"> + ₱{{ number_format($deliveryFee, 2) }} delivery</span>
+                                </p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-gray-500 uppercase tracking-wider">Total Amount</p>
+                                <p class="text-3xl font-bold text-blue-700">₱<span id="preview-total">0.00</span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Mark as Paid (only for refill) --}}
+                    <div id="paid-section" class="mt-4 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" name="mark_paid" value="1" {{ old('mark_paid') ? 'checked' : '' }} class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                            <div class="ml-3">
+                                <p class="font-medium text-gray-800">💵 Customer paid immediately (Cash)</p>
+                                <p class="text-xs text-gray-500">Check this if the customer already paid. Leave unchecked if unpaid.</p>
+                            </div>
+                        </label>
                     </div>
 
                     <div class="mt-6 flex items-center justify-end gap-3">
@@ -109,20 +135,46 @@
     </div>
 
     <script>
+        const pricePerGallon = {{ $pricePerGallon }};
+        const deliveryFee = {{ $deliveryFee }};
+
         function toggleDeliveryFields() {
             const deliveryRadio = document.querySelector('input[name="order_type"][value="delivery"]');
             const deliveryFields = document.getElementById('delivery-fields');
             const addressInput = document.getElementById('delivery_address');
+            const paidSection = document.getElementById('paid-section');
+            const previewFee = document.getElementById('preview-fee');
 
             if (deliveryRadio && deliveryRadio.checked) {
                 deliveryFields.classList.remove('hidden');
                 addressInput.required = true;
+                paidSection.classList.add('hidden');
+                previewFee.classList.remove('hidden');
             } else {
                 deliveryFields.classList.add('hidden');
                 addressInput.required = false;
+                paidSection.classList.remove('hidden');
+                previewFee.classList.add('hidden');
             }
+            calculateTotal();
         }
 
-        document.addEventListener('DOMContentLoaded', toggleDeliveryFields);
+        function calculateTotal() {
+            const qty = parseInt(document.getElementById('quantity').value) || 0;
+            const deliveryRadio = document.querySelector('input[name="order_type"][value="delivery"]');
+            const isDelivery = deliveryRadio && deliveryRadio.checked;
+
+            const subtotal = qty * pricePerGallon;
+            const fee = isDelivery ? deliveryFee : 0;
+            const total = subtotal + fee;
+
+            document.getElementById('preview-qty').textContent = qty;
+            document.getElementById('preview-total').textContent = total.toFixed(2);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleDeliveryFields();
+            calculateTotal();
+        });
     </script>
 </x-app-layout>

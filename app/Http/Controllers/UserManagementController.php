@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\RiderProfile;
+use App\Models\AdminActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -15,15 +16,12 @@ class UserManagementController extends Controller
      */
     public function index(Request $request)
     {
-        // ✅ Only OWNER can access this
         if (Auth::user()->role !== 'owner') {
             abort(403, 'Only the system owner can manage users.');
         }
 
-        // Build the query
         $query = User::query();
 
-        // 🔍 Search by name or email
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -32,17 +30,14 @@ class UserManagementController extends Controller
             });
         }
 
-        // 🎯 Filter by role
         if ($request->filled('role')) {
             $query->where('role', $request->role);
         }
 
-        // 🎯 Filter by status
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        // 🎯 Filter by deleted (soft delete)
         if ($request->filled('deleted')) {
             if ($request->deleted === 'only') {
                 $query->onlyTrashed();
@@ -50,17 +45,12 @@ class UserManagementController extends Controller
                 $query->withTrashed();
             }
         } else {
-            // Default: only show non-deleted users
             $query->whereNull('deleted_at');
         }
 
-        // Order by latest first
         $query->orderBy('created_at', 'desc');
-
-        // 📄 Paginate (10 per page)
         $users = $query->paginate(10)->withQueryString();
 
-        // 📊 Get counts for dashboard stats
         $totalUsers = User::count();
         $pendingCount = User::where('status', 'pending')->whereNull('deleted_at')->count();
         $approvedCount = User::where('status', 'approved')->whereNull('deleted_at')->count();
@@ -82,14 +72,14 @@ class UserManagementController extends Controller
      */
     public function approve($id)
     {
-        // ✅ Only OWNER can approve
-        if (Auth::user()->role !== 'owner') {
-            abort(403, 'Only the system owner can approve users.');
-        }
+        if (Auth::user()->role !== 'owner') abort(403);
 
         $user = User::findOrFail($id);
         $user->status = 'approved';
         $user->save();
+
+        // ✅ Log activity
+        AdminActivityLog::log('approved', $user, "Approved user account ({$user->email})");
 
         return redirect()->route('cashier.users')->with('success', "✅ User '{$user->name}' has been approved successfully.");
     }
@@ -99,14 +89,14 @@ class UserManagementController extends Controller
      */
     public function reject($id)
     {
-        // ✅ Only OWNER can reject
-        if (Auth::user()->role !== 'owner') {
-            abort(403, 'Only the system owner can reject users.');
-        }
+        if (Auth::user()->role !== 'owner') abort(403);
 
         $user = User::findOrFail($id);
         $user->status = 'rejected';
         $user->save();
+
+        // ✅ Log activity
+        AdminActivityLog::log('rejected', $user, "Rejected user account ({$user->email})");
 
         return redirect()->route('cashier.users')->with('success', "❌ User '{$user->name}' has been rejected.");
     }
@@ -116,10 +106,7 @@ class UserManagementController extends Controller
      */
     public function edit($id)
     {
-        // ✅ Only OWNER can edit
-        if (Auth::user()->role !== 'owner') {
-            abort(403, 'Only the system owner can edit users.');
-        }
+        if (Auth::user()->role !== 'owner') abort(403);
 
         $user = User::withTrashed()->findOrFail($id);
         return view('cashier.user-edit', compact('user'));
@@ -130,10 +117,7 @@ class UserManagementController extends Controller
      */
     public function update(Request $request, $id)
     {
-        // ✅ Only OWNER can update
-        if (Auth::user()->role !== 'owner') {
-            abort(403, 'Only the system owner can update users.');
-        }
+        if (Auth::user()->role !== 'owner') abort(403);
 
         $user = User::withTrashed()->findOrFail($id);
 
@@ -141,15 +125,17 @@ class UserManagementController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $id],
             'contact_no' => ['required', 'string', 'max:20'],
-            'role' => ['required', 'in:customer,rider,cashier,owner'], // ✅ Added 'owner'
+            'role' => ['required', 'in:customer,rider,cashier,owner'],
         ];
 
-        // Only validate password if it's being changed
         if ($request->filled('password')) {
             $rules['password'] = ['string', 'min:8', 'confirmed'];
         }
 
         $request->validate($rules);
+
+        $oldRole = $user->role;
+        $oldName = $user->name;
 
         $user->name = $request->name;
         $user->email = $request->email;
@@ -162,6 +148,12 @@ class UserManagementController extends Controller
 
         $user->save();
 
+        // ✅ Log activity
+        $description = $oldRole !== $user->role
+            ? "Changed role from '{$oldRole}' to '{$user->role}'"
+            : "Updated user account details ({$user->email})";
+        AdminActivityLog::log('edited', $user, $description);
+
         return redirect()->route('cashier.users')->with('success', "✏️ User '{$user->name}' has been updated successfully.");
     }
 
@@ -170,13 +162,13 @@ class UserManagementController extends Controller
      */
     public function destroy($id)
     {
-        // ✅ Only OWNER can delete
-        if (Auth::user()->role !== 'owner') {
-            abort(403, 'Only the system owner can delete users.');
-        }
+        if (Auth::user()->role !== 'owner') abort(403);
 
         $user = User::findOrFail($id);
         $user->delete();
+
+        // ✅ Log activity
+        AdminActivityLog::log('deleted', $user, "Soft-deleted user account ({$user->email})");
 
         return redirect()->route('cashier.users')->with('success', "🗑️ User '{$user->name}' has been deleted.");
     }
@@ -186,29 +178,31 @@ class UserManagementController extends Controller
      */
     public function restore($id)
     {
-        // ✅ Only OWNER can restore
-        if (Auth::user()->role !== 'owner') {
-            abort(403, 'Only the system owner can restore users.');
-        }
+        if (Auth::user()->role !== 'owner') abort(403);
 
         $user = User::onlyTrashed()->findOrFail($id);
         $user->restore();
+
+        // ✅ Log activity
+        AdminActivityLog::log('restored', $user, "Restored deleted user account ({$user->email})");
 
         return redirect()->route('cashier.users')->with('success', "♻️ User '{$user->name}' has been restored.");
     }
 
     /**
-     * Permanently delete a user (hard delete).
+     * Permanently delete a user.
      */
     public function forceDelete($id)
     {
-        // ✅ Only OWNER can force delete
-        if (Auth::user()->role !== 'owner') {
-            abort(403, 'Only the system owner can permanently delete users.');
-        }
+        if (Auth::user()->role !== 'owner') abort(403);
 
         $user = User::onlyTrashed()->findOrFail($id);
         $userName = $user->name;
+        $userEmail = $user->email;
+
+        // ✅ Log BEFORE force delete (so user exists at log time)
+        AdminActivityLog::log('force_deleted', $user, "Permanently deleted user account ({$userEmail})");
+
         $user->forceDelete();
 
         return redirect()->route('cashier.users')->with('success', "🗑️ User '{$userName}' has been permanently deleted.");
@@ -219,10 +213,7 @@ class UserManagementController extends Controller
      */
     public function createRider()
     {
-        // ✅ Only OWNER can create riders
-        if (Auth::user()->role !== 'owner') {
-            abort(403, 'Only the system owner can create rider accounts.');
-        }
+        if (Auth::user()->role !== 'owner') abort(403);
         return view('cashier.create-rider');
     }
 
@@ -231,10 +222,7 @@ class UserManagementController extends Controller
      */
     public function storeRider(Request $request)
     {
-        // ✅ Only OWNER can store riders
-        if (Auth::user()->role !== 'owner') {
-            abort(403, 'Only the system owner can create rider accounts.');
-        }
+        if (Auth::user()->role !== 'owner') abort(403);
 
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -260,6 +248,9 @@ class UserManagementController extends Controller
             'plate_number' => $request->plate_number,
             'availability_status' => 'available',
         ]);
+
+        // ✅ Log activity
+        AdminActivityLog::log('created_rider', $user, "Created new rider account ({$user->email})");
 
         return redirect()->route('cashier.users')->with('success', "🛵 Rider '{$user->name}' created successfully!");
     }

@@ -35,9 +35,10 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order #</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
@@ -46,29 +47,31 @@
                                 @foreach($orders as $order)
                                     <tr class="hover:bg-gray-50 transition">
                                         <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">#{{ $order->id }}</td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $order->quantity }} gallon(s)</td>
-                                        <td class="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">{{ $order->delivery_address }}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $order->quantity }} gal</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-800">₱{{ number_format($order->total_amount, 2) }}</td>
                                         <td class="px-4 py-3 whitespace-nowrap">
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $order->getStatusBadgeColor() }}">
                                                 {{ $order->getStatusIcon() }} {{ $order->getStatusLabel() }}
                                             </span>
-                                            @if($order->wasModified())
-                                                <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-100 text-gray-600" title="Modified after creation">✏️</span>
-                                            @endif
                                         </td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $order->created_at->format('M d, Y h:i A') }}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $order->getPaymentStatusBadgeColor() }}">
+                                                {{ $order->getPaymentStatusLabel() }}
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $order->created_at->format('M d, Y') }}</td>
                                         <td class="px-4 py-3 whitespace-nowrap text-sm">
-                                            @if($order->canBeModified())
-                                                <div class="flex gap-2">
-                                                    <a href="{{ route('customer.edit-order', $order->id) }}" class="px-3 py-1 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition text-xs font-medium">✏️ Edit</a>
+                                            <div class="flex gap-1">
+                                                <a href="{{ route('orders.track', $order->id) }}" class="px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-xs font-medium" title="Track Order">📍</a>
+                                                <a href="{{ route('orders.receipt', $order->id) }}" target="_blank" class="px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-xs font-medium" title="Receipt">🧾</a>
+                                                @if($order->canBeModified())
+                                                    <a href="{{ route('customer.edit-order', $order->id) }}" class="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-xs font-medium" title="Edit">✏️</a>
                                                     <form method="POST" action="{{ route('customer.cancel-order', $order->id) }}" class="inline" onsubmit="return confirm('Cancel this order?')">
                                                         @csrf
-                                                        <button type="submit" class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-xs font-medium">❌ Cancel</button>
+                                                        <button type="submit" class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs font-medium" title="Cancel">❌</button>
                                                     </form>
-                                                </div>
-                                            @else
-                                                <span class="text-xs text-gray-400">—</span>
-                                            @endif
+                                                @endif
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach

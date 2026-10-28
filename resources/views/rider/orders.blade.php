@@ -19,7 +19,6 @@
                 <div class="mb-4 p-4 bg-red-100 text-red-700 rounded-lg border border-red-200">{{ session('error') }}</div>
             @endif
 
-            {{-- Rider Stats --}}
             <div class="grid grid-cols-3 gap-4 mb-6">
                 <div class="bg-white rounded-xl shadow p-4 text-center border-l-4 border-blue-500">
                     <p class="text-2xl font-bold text-blue-600">{{ $stats['assigned'] }}</p>
@@ -35,7 +34,7 @@
                 </div>
             </div>
 
-            {{-- Active Orders (Assigned & On Delivery) --}}
+            {{-- Active Orders --}}
             <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
                 <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
                     <h3 class="font-semibold text-gray-800">🔄 Active Deliveries</h3>
@@ -51,6 +50,7 @@
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Collect</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
@@ -59,27 +59,38 @@
                                 @foreach($assignedOrders as $order)
                                     <tr class="hover:bg-gray-50 transition">
                                         <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">#{{ $order->id }}</td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">{{ $order->customer->name ?? 'N/A' }}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">{{ $order->getCustomerName() }}</td>
                                         <td class="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">{{ $order->delivery_address }}</td>
                                         <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $order->quantity }}</td>
                                         <td class="px-4 py-3 whitespace-nowrap">
+                                            <span class="font-semibold text-gray-800">₱{{ number_format($order->total_amount, 2) }}</span>
+                                            @if($order->isPaid())
+                                                <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-green-100 text-green-700">PAID</span>
+                                            @else
+                                                <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-orange-100 text-orange-700">COLLECT</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap">
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $order->getStatusBadgeColor() }}">
-                                                {{ $order->getStatusIcon() }} {{ ucfirst($order->status) }}
+                                                {{ $order->getStatusIcon() }} {{ $order->getStatusLabel() }}
                                             </span>
                                         </td>
                                         <td class="px-4 py-3 whitespace-nowrap text-sm">
-                                            @if($order->status === 'assigned')
-                                                <form method="POST" action="{{ route('rider.mark-on-delivery', $order->id) }}" class="inline">
-                                                    @csrf
-                                                    <button type="submit" class="px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-xs font-medium">🚚 Start Delivery</button>
-                                                </form>
-                                            @endif
-                                            @if($order->status === 'on_delivery' || $order->status === 'assigned')
-                                                <form method="POST" action="{{ route('rider.mark-delivered', $order->id) }}" class="inline">
-                                                    @csrf
-                                                    <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-xs font-medium">✅ Delivered</button>
-                                                </form>
-                                            @endif
+                                            <div class="flex gap-1">
+                                                <a href="{{ route('orders.track', $order->id) }}" class="px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-xs font-medium" title="Track">📍</a>
+                                                @if($order->status === 'assigned')
+                                                    <form method="POST" action="{{ route('rider.mark-on-delivery', $order->id) }}" class="inline">
+                                                        @csrf
+                                                        <button type="submit" class="px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-xs font-medium">🚚 Start</button>
+                                                    </form>
+                                                @endif
+                                                @if($order->status === 'on_delivery' || $order->status === 'assigned')
+                                                    <form method="POST" action="{{ route('rider.mark-delivered', $order->id) }}" class="inline">
+                                                        @csrf
+                                                        <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-xs font-medium">✅ Done</button>
+                                                    </form>
+                                                @endif
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -103,7 +114,8 @@
                                 <tr>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Delivered At</th>
                                 </tr>
                             </thead>
@@ -111,8 +123,13 @@
                                 @foreach($completedOrders as $order)
                                     <tr class="hover:bg-gray-50 transition">
                                         <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">#{{ $order->id }}</td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">{{ $order->customer->name ?? 'N/A' }}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">{{ $order->delivery_address }}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">{{ $order->getCustomerName() }}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-800">₱{{ number_format($order->total_amount, 2) }}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $order->getPaymentStatusBadgeColor() }}">
+                                                {{ $order->getPaymentStatusLabel() }}
+                                            </span>
+                                        </td>
                                         <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $order->delivered_at ? $order->delivered_at->format('M d, Y h:i A') : 'N/A' }}</td>
                                     </tr>
                                 @endforeach

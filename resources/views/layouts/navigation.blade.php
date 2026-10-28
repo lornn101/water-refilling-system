@@ -41,22 +41,31 @@
                         </x-nav-link>
                     @endif
 
-                    {{-- 🟢 Order Management Links (Owner & Cashier) --}}
-                    @if(Auth::user()->role === 'owner' || Auth::user()->role === 'cashier')
-                        <x-nav-link :href="route('owner.orders')" :active="request()->routeIs('owner.orders')">
-                            {{ __('Manage Orders') }}
-                        </x-nav-link>
-                    @endif
+{{-- 🟢 Order Management Links (Owner & Cashier) --}}
+@if(Auth::user()->role === 'owner' || Auth::user()->role === 'cashier')
+    <x-nav-link :href="route('owner.orders')" :active="request()->routeIs('owner.orders')">
+        {{ __('Manage Orders') }}
+    </x-nav-link>
+    <x-nav-link :href="route('owner.reports')" :active="request()->routeIs('owner.reports')">
+        {{ __('Reports') }}
+    </x-nav-link>
+@endif
 
-                    {{-- Owner-Only Links (Desktop) --}}
-                    @if(Auth::user()->role === 'owner')
-                        <x-nav-link :href="route('cashier.users')" :active="request()->routeIs('cashier.users')">
-                            {{ __('Manage Users') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('cashier.create-rider')" :active="request()->routeIs('cashier.create-rider')">
-                            {{ __('Add Rider') }}
-                        </x-nav-link>
-                    @endif
+{{-- Owner-Only Links (Desktop) --}}
+@if(Auth::user()->role === 'owner')
+    <x-nav-link :href="route('owner.settings')" :active="request()->routeIs('owner.settings')">
+        {{ __('Settings') }}
+    </x-nav-link>
+    <x-nav-link :href="route('owner.activity-log')" :active="request()->routeIs('owner.activity-log')">
+        {{ __('Activity Log') }}
+    </x-nav-link>
+    <x-nav-link :href="route('cashier.users')" :active="request()->routeIs('cashier.users')">
+        {{ __('Manage Users') }}
+    </x-nav-link>
+    <x-nav-link :href="route('cashier.create-rider')" :active="request()->routeIs('cashier.create-rider')">
+        {{ __('Add Rider') }}
+    </x-nav-link>
+@endif
                 </div>
             </div>
 
@@ -134,22 +143,31 @@
                 </x-responsive-nav-link>
             @endif
 
-            {{-- 🟢 Order Management Links (Owner & Cashier) --}}
-            @if(Auth::user()->role === 'owner' || Auth::user()->role === 'cashier')
-                <x-responsive-nav-link :href="route('owner.orders')" :active="request()->routeIs('owner.orders')">
-                    {{ __('Manage Orders') }}
-                </x-responsive-nav-link>
-            @endif
+ {{-- 🟢 Order Management Links (Owner & Cashier) --}}
+@if(Auth::user()->role === 'owner' || Auth::user()->role === 'cashier')
+    <x-responsive-nav-link :href="route('owner.orders')" :active="request()->routeIs('owner.orders')">
+        {{ __('Manage Orders') }}
+    </x-responsive-nav-link>
+    <x-responsive-nav-link :href="route('owner.reports')" :active="request()->routeIs('owner.reports')">
+        {{ __('Reports') }}
+    </x-responsive-nav-link>
+@endif
 
-            {{-- Owner-Only Links (Mobile) --}}
-            @if(Auth::user()->role === 'owner')
-                <x-responsive-nav-link :href="route('cashier.users')" :active="request()->routeIs('cashier.users')">
-                    {{ __('Manage Users') }}
-                </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('cashier.create-rider')" :active="request()->routeIs('cashier.create-rider')">
-                    {{ __('Add Rider') }}
-                </x-responsive-nav-link>
-            @endif
+   {{-- Owner-Only Links (Mobile) --}}
+@if(Auth::user()->role === 'owner')
+    <x-responsive-nav-link :href="route('owner.settings')" :active="request()->routeIs('owner.settings')">
+        {{ __('Settings') }}
+    </x-responsive-nav-link>
+    <x-responsive-nav-link :href="route('owner.activity-log')" :active="request()->routeIs('owner.activity-log')">
+        {{ __('Activity Log') }}
+    </x-responsive-nav-link>
+    <x-responsive-nav-link :href="route('cashier.users')" :active="request()->routeIs('cashier.users')">
+        {{ __('Manage Users') }}
+    </x-responsive-nav-link>
+    <x-responsive-nav-link :href="route('cashier.create-rider')" :active="request()->routeIs('cashier.create-rider')">
+        {{ __('Add Rider') }}
+    </x-responsive-nav-link>
+@endif
         </div>
 
         <!-- Responsive Settings Options -->

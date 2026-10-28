@@ -39,19 +39,19 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <x-input-label for="quantity" :value="__('Number of Gallons')" />
-                            <x-text-input id="quantity" class="block mt-1 w-full" type="number" name="quantity" :value="old('quantity', 1)" min="1" max="20" required />
+                            <input id="quantity" name="quantity" type="number" min="1" max="20" value="{{ old('quantity', 1) }}" oninput="calculateTotal()" class="block mt-1 w-full border-gray-300 focus:border-blue-400 focus:ring-blue-400 rounded-lg shadow-sm" required />
                             <x-input-error :messages="$errors->get('quantity')" class="mt-2" />
                         </div>
 
                         <div>
                             <x-input-label for="contact_number" :value="__('Contact Number')" />
-                            <x-text-input id="contact_number" class="block mt-1 w-full" type="text" name="contact_number" :value="old('contact_number', $user->contact_no ?? '')" required />
+                            <input id="contact_number" name="contact_number" type="text" value="{{ old('contact_number', $user->contact_no ?? '') }}" class="block mt-1 w-full border-gray-300 focus:border-blue-400 focus:ring-blue-400 rounded-lg shadow-sm" required />
                             <x-input-error :messages="$errors->get('contact_number')" class="mt-2" />
                         </div>
 
                         <div class="md:col-span-2">
                             <x-input-label for="delivery_address" :value="__('Delivery Address')" />
-                            <x-text-input id="delivery_address" class="block mt-1 w-full" type="text" name="delivery_address" :value="old('delivery_address', $user->customerProfile->street_address ?? '')" required />
+                            <input id="delivery_address" name="delivery_address" type="text" value="{{ old('delivery_address', $user->customerProfile->street_address ?? '') }}" class="block mt-1 w-full border-gray-300 focus:border-blue-400 focus:ring-blue-400 rounded-lg shadow-sm" required />
                             <x-input-error :messages="$errors->get('delivery_address')" class="mt-2" />
                         </div>
 
@@ -63,9 +63,27 @@
 
                         <div class="md:col-span-2">
                             <x-input-label for="delivery_date" :value="__('Preferred Delivery Date')" />
-                            <x-text-input id="delivery_date" class="block mt-1 w-full" type="date" name="delivery_date" :value="old('delivery_date', now()->addDay()->format('Y-m-d'))" />
+                            <input id="delivery_date" name="delivery_date" type="date" value="{{ old('delivery_date', now()->addDay()->format('Y-m-d')) }}" class="block mt-1 w-full border-gray-300 focus:border-blue-400 focus:ring-blue-400 rounded-lg shadow-sm" />
                             <x-input-error :messages="$errors->get('delivery_date')" class="mt-2" />
                         </div>
+                    </div>
+
+                    {{-- Live Total Preview --}}
+                    <div class="mt-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-xs text-gray-500 uppercase tracking-wider">Live Total Calculation</p>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    <span id="preview-qty">1</span> gallon × ₱{{ number_format($pricePerGallon, 2) }}
+                                    <span class="text-gray-400">+ ₱{{ number_format($deliveryFee, 2) }} delivery</span>
+                                </p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-gray-500 uppercase tracking-wider">Total Amount</p>
+                                <p class="text-3xl font-bold text-blue-700">₱<span id="preview-total">0.00</span></p>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">💡 Payment will be collected on delivery (Cash or GCash).</p>
                     </div>
 
                     <div class="mt-6 flex items-center justify-end gap-3">
@@ -80,4 +98,18 @@
             </div>
         </div>
     </div>
+
+    <script>
+        const pricePerGallon = {{ $pricePerGallon }};
+        const deliveryFee = {{ $deliveryFee }};
+
+        function calculateTotal() {
+            const qty = parseInt(document.getElementById('quantity').value) || 0;
+            const total = (qty * pricePerGallon) + deliveryFee;
+            document.getElementById('preview-qty').textContent = qty;
+            document.getElementById('preview-total').textContent = total.toFixed(2);
+        }
+
+        document.addEventListener('DOMContentLoaded', calculateTotal);
+    </script>
 </x-app-layout>

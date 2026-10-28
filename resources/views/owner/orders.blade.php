@@ -33,15 +33,34 @@
                     <h1 class="text-2xl font-bold text-gray-800">All Orders</h1>
                     <p class="text-sm text-gray-500">Manage online and walk-in orders</p>
                 </div>
-                <a href="{{ route('owner.walk-in-create') }}" class="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition shadow-md text-sm font-medium inline-flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    New Walk-in Order
-                </a>
+                <div class="flex gap-2">
+                    @if(Auth::user()->role === 'owner')
+                        <a href="{{ route('owner.settings') }}" class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition shadow-md text-sm font-medium inline-flex items-center">
+                            ⚙️ Settings
+                        </a>
+                    @endif
+                    <a href="{{ route('owner.walk-in-create') }}" class="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition shadow-md text-sm font-medium inline-flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        New Walk-in Order
+                    </a>
+                </div>
             </div>
 
-            {{-- Stats Dashboard (6 cards) --}}
+            {{-- Revenue Banner --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+                    <p class="text-emerald-100 text-sm uppercase tracking-wider">Total Revenue (Paid)</p>
+                    <p class="text-3xl font-bold mt-1">₱{{ number_format($totalRevenue, 2) }}</p>
+                </div>
+                <div class="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl shadow-lg p-6 text-white">
+                    <p class="text-orange-100 text-sm uppercase tracking-wider">Outstanding (Unpaid, Delivered/Completed)</p>
+                    <p class="text-3xl font-bold mt-1">₱{{ number_format($unpaidAmount, 2) }}</p>
+                </div>
+            </div>
+
+            {{-- Stats --}}
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
                 <div class="bg-white rounded-xl shadow p-4 text-center border-l-4 border-gray-500">
                     <p class="text-2xl font-bold text-gray-600">{{ $totalOrders }}</p>
@@ -74,7 +93,7 @@
                 <form method="GET" action="{{ route('owner.orders') }}" class="flex flex-wrap gap-3 items-end">
                     <div class="flex-1 min-w-[150px]">
                         <label class="block text-xs font-medium text-gray-500 mb-1">Search</label>
-                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Order #, customer name..." class="w-full border-gray-200 rounded-lg focus:border-blue-400 focus:ring-blue-400 text-sm">
+                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Order #, customer..." class="w-full border-gray-200 rounded-lg focus:border-blue-400 focus:ring-blue-400 text-sm">
                     </div>
                     <div class="w-[140px]">
                         <label class="block text-xs font-medium text-gray-500 mb-1">Status</label>
@@ -86,6 +105,15 @@
                             <option value="delivered" {{ request('status') == 'delivered' ? 'selected' : '' }}>Delivered</option>
                             <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
                             <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="w-[140px]">
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Payment</label>
+                        <select name="payment_status" class="w-full border-gray-200 rounded-lg focus:border-blue-400 focus:ring-blue-400 text-sm">
+                            <option value="">All</option>
+                            <option value="unpaid" {{ request('payment_status') == 'unpaid' ? 'selected' : '' }}>Unpaid</option>
+                            <option value="paid" {{ request('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>
+                            <option value="refunded" {{ request('payment_status') == 'refunded' ? 'selected' : '' }}>Refunded</option>
                         </select>
                     </div>
                     <div class="w-[140px]">
@@ -110,9 +138,10 @@
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rider</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
@@ -125,29 +154,30 @@
                                             <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-cyan-100 text-cyan-700">W</span>
                                         @endif
                                     </td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">
-                                        {{ $order->getCustomerName() }}
-                                        @if($order->is_walk_in)
-                                            <p class="text-xs text-gray-400">Walk-in customer</p>
-                                        @endif
-                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">{{ $order->getCustomerName() }}</td>
                                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $order->quantity }}</td>
-                                    <td class="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">{{ $order->delivery_address }}</td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                                        {{ $order->rider->name ?? '—' }}
-                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-800">₱{{ number_format($order->total_amount, 2) }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $order->rider->name ?? '—' }}</td>
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $order->getStatusBadgeColor() }}">
                                             {{ $order->getStatusIcon() }} {{ $order->getStatusLabel() }}
                                         </span>
                                     </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $order->getPaymentStatusBadgeColor() }}">
+                                            {{ $order->getPaymentStatusLabel() }}
+                                        </span>
+                                    </td>
                                     <td class="px-4 py-3 whitespace-nowrap text-sm">
-                                        <a href="{{ route('owner.order-detail', $order->id) }}" class="text-blue-600 hover:text-blue-800 font-medium">View</a>
+                                        <div class="flex gap-2">
+                                            <a href="{{ route('owner.order-detail', $order->id) }}" class="text-blue-600 hover:text-blue-800 font-medium">View</a>
+                                            <a href="{{ route('orders.receipt', $order->id) }}" target="_blank" class="text-gray-500 hover:text-gray-700" title="Receipt">🧾</a>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="px-4 py-8 text-center text-gray-500">No orders found.</td>
+                                    <td colspan="8" class="px-4 py-8 text-center text-gray-500">No orders found.</td>
                                 </tr>
                             @endforelse
                         </tbody>
