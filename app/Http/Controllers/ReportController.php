@@ -170,8 +170,7 @@ class ReportController extends Controller
         // ============================================
         // A8 - PROJECTIONS (now correctly defined INSIDE buildReportData)
         // ============================================
-        $daysInPeriod = $from->diffInDays($to) + 1;
-        $dailyAvgRevenue = $daysInPeriod > 0 ? $totalRevenue / $daysInPeriod : 0;
+        $daysInPeriod = (int) $from->copy()->startOfDay()->diffInDays($to->copy()->startOfDay()) + 1;        $dailyAvgRevenue = $daysInPeriod > 0 ? $totalRevenue / $daysInPeriod : 0;
         $dailyAvgOrders = $daysInPeriod > 0 ? $totalOrders / $daysInPeriod : 0;
         $dailyAvgGallons = $daysInPeriod > 0 ? $totalGallons / $daysInPeriod : 0;
 

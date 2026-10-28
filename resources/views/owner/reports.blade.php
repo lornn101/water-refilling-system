@@ -59,11 +59,11 @@
                 <p class="text-xs text-gray-500">Generated: {{ now()->format('M d, Y h:i A') }}</p>
             </div>
 
-            {{-- Period Indicator --}}
+                        {{-- Period Indicator --}}
             <div class="mb-4 flex justify-between items-center">
                 <p class="text-sm text-gray-600">
                     📅 Showing data from <strong>{{ $from->format('M d, Y') }}</strong> to <strong>{{ $to->format('M d, Y') }}</strong>
-                    <span class="text-gray-400">({{ $from->diffInDays($to) + 1 }} days)</span>
+                    <span class="text-gray-400">({{ $daysInPeriod }} days)</span>
                 </p>
             </div>
 
