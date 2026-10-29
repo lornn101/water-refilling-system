@@ -40,6 +40,18 @@
                         ↺ Reset
                     </a>
 
+                    {{-- 🆕 QUICK FILTER BUTTONS --}}
+                    <div class="flex gap-2 border-l border-gray-300 pl-3 ml-1">
+                        <a href="{{ route('owner.reports', ['from' => now()->startOfMonth()->format('Y-m-d'), 'to' => now()->format('Y-m-d')]) }}" 
+                           class="px-3 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition text-sm font-medium border border-indigo-200">
+                           📅 This Month
+                        </a>
+                        <a href="{{ route('owner.reports', ['from' => now()->startOfYear()->format('Y-m-d'), 'to' => now()->format('Y-m-d')]) }}" 
+                           class="px-3 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition text-sm font-medium border border-indigo-200">
+                           🗓️ This Year
+                        </a>
+                    </div>
+
                     <div class="ml-auto flex gap-2">
                         <a href="{{ route('owner.reports.export-csv', ['from' => $from->format('Y-m-d'), 'to' => $to->format('Y-m-d')]) }}"
                            class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition text-sm font-medium">

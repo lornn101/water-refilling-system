@@ -453,8 +453,9 @@
                     </ul>
                 </div>
             </div>
-            <div class="border-t border-gray-800 mt-8 pt-6 text-center text-gray-500 text-sm">
-                &copy; 2024 Poblacion Water Refilling Station. All rights reserved.
+                <div class="border-t border-gray-800 mt-8 pt-6 text-center text-gray-500 text-sm">
+                <p>&copy; 2026 Poblacion Water Refilling Station. All rights reserved.</p>
+                <p class="mt-2 text-gray-400 text-xs">Developed by LORENZ ADRIAN F. CAL</p>
             </div>
         </div>
     </footer>
